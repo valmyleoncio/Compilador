@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <vector>
+
 
 #define YYSTYPE atributos
 
@@ -14,6 +16,16 @@ struct atributos
 	string label;
 	string traducao;
 };
+
+typedef struct
+{ 
+	string nomeVariavel;
+	string tipoVariavel;
+
+
+}SYMBOL_TYPE;
+
+vector<SYMBOL_TYPE> tabelaSimbolos;
 
 int yylex(void);
 void yyerror(string);
@@ -53,6 +65,17 @@ COMANDOS	: COMANDO COMANDOS
 			;
 
 COMANDO 	: E ';'
+			|TK_TIPO_INT TK_ID ';'
+			{
+				SYMBOL_TYPE batata;
+				batata.nomeVariavel = $2.label;
+				batata.tipoVariavel = "int";
+				tabelaSimbolos.push_back(batata);
+
+				$$.traducao = "";
+				$$.label = "";
+
+			}
 			;
 
 E 			: E '+' E
@@ -109,6 +132,9 @@ string gentempcode()
 
 int main(int argc, char* argv[])
 {
+	
+
+
 	var_temp_qnt = 0;
 	yyparse();
 	return 0;
