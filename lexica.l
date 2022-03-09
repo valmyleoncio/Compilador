@@ -1,5 +1,6 @@
 %{
 #include <string>
+int contLinha = 0;
 %}
 
 ESPACO [ \t]
@@ -47,6 +48,8 @@ ID {LETRA}({LETRA}|{NUM})*
 "!="        {return *yytext;}
 
 {NUM}		{ yylval.label = yytext; return TK_NUM; }
+{REAL}		{ yylval.label = yytext; return TK_REAL; }
+{CHAR}		{ yylval.label = yytext; return TK_CHAR; }
 {ID}		{ yylval.label = yytext; return TK_ID; }
 
 .			{ *yytext; }
