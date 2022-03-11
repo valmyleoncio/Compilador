@@ -9,6 +9,6 @@ commit:
 		git init
 		git add .
 		git commit -m "Primeira Etapa"
-		clear
-		git push -u origin/Development
+		git branch -M Development
+		git push -u origin Development
 
