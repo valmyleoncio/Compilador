@@ -2,14 +2,7 @@ int main()
 {
     int a;
     int b;
+
     a = 5;
-    b = a + 3;
-
-    int d;
-    int e;
-    d = 7;
-    e = d * 3;
-
-    float result;
-    result = b / e;
+    b = a * 3;
 }

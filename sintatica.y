@@ -15,29 +15,39 @@ struct atributos
 	string label;
 	string traducao;
 	string tipo;
+	string conteudo;
 };
 
 typedef struct
 {
 	string nomeVariavel;
-	string tipoVariavel;
+	string tipoVariavel; 
 	string labelVariavel;
-	string atribuicao;
 }	TIPO_SIMBOLO;
 
+typedef struct
+{
+	string tipoVariavel; 
+	string labelVariavel;
+}	TIPO_TEMP;
+
+
 vector<TIPO_SIMBOLO> tabelaSimbolos;
+vector<TIPO_TEMP> tabelaTemp;
 string atribuicaoVariavel = "";
 
 int yylex(void);
 void yyerror(string);
 string gentempcode();
-string cast(TIPO_SIMBOLO var1, TIPO_SIMBOLO var2);
 void verificarVariavelRepetida(string variavel);
+void verificarVariavelExistente(string nomeVariavel);
 TIPO_SIMBOLO getSimbolo(string variavel);
+void addSimbolo(string variavel, string tipo, string label);
+void addTemp(string label, string tipo);
 %}
 
 %token TK_NUM TK_REAL TK_CHAR
-%token TK_MAIN TK_ID TK_TIPO_INT TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOLEAN
+%token TK_MAIN TK_ID TK_TIPO_INT TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOLEAN TK_TRUE TK_FALSE
 %token TK_FIM TK_ERROR
 
 %start S
@@ -71,53 +81,29 @@ COMANDOS	: COMANDO COMANDOS
 COMANDO 	: E ';'
 			| TK_TIPO_INT TK_ID ';'
 			{
-				TIPO_SIMBOLO valor;
-				valor.nomeVariavel = $2.label;
-				verificarVariavelRepetida(valor.nomeVariavel);
-				valor.tipoVariavel = "int";
-				valor.labelVariavel = gentempcode();
-
-				atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
-
+				verificarVariavelRepetida($2.label);
+				addSimbolo($2.label, "int", gentempcode());
 				$$.traducao = "";
 				$$.label = "";
-
-				tabelaSimbolos.push_back(valor);
 			}			
 			| TK_TIPO_FLOAT TK_ID ';'
 			{
-				TIPO_SIMBOLO valor;
-				valor.nomeVariavel = $2.label;
-				verificarVariavelRepetida(valor.nomeVariavel);
-				valor.tipoVariavel = "float";
-				valor.labelVariavel = gentempcode();
-
-				atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
-
+				verificarVariavelRepetida($2.label);
+				addSimbolo($2.label, "float", gentempcode());
 				$$.traducao = "";
 				$$.label = "";
-
-				tabelaSimbolos.push_back(valor);
 			}
 			| TK_TIPO_CHAR TK_ID ';'
 			{
-				TIPO_SIMBOLO valor;
-				valor.nomeVariavel = $2.label;
-				verificarVariavelRepetida(valor.nomeVariavel);
-				valor.tipoVariavel = "char";
-				tabelaSimbolos.push_back(valor);
-
+				verificarVariavelRepetida($2.label);
+				addSimbolo($2.label, "char", gentempcode());
 				$$.traducao = "";
 				$$.label = "";
 			}
 			| TK_TIPO_BOOLEAN TK_ID ';'
 			{
-				TIPO_SIMBOLO valor;
-				valor.nomeVariavel = $2.label;
-				verificarVariavelRepetida(valor.nomeVariavel);
-				valor.tipoVariavel = "boolean";
-				tabelaSimbolos.push_back(valor);
-
+				verificarVariavelRepetida($2.label);
+				addSimbolo($2.label, "boolean", gentempcode());
 				$$.traducao = "";
 				$$.label = "";
 			}
@@ -153,6 +139,7 @@ E 			: E '+' E
 			}
 			| TK_ID '=' E
 			{
+				verificarVariavelExistente($1.label);
 				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				variavel_1.labelVariavel + " = " + $3.label + ";\n";
@@ -161,26 +148,27 @@ E 			: E '+' E
 			{
 				$$.tipo = "int";
 				$$.label = gentempcode();
-				atribuicaoVariavel = atribuicaoVariavel + "\t" + $$.tipo + " " + $$.label + ";\n";
+				addTemp($$.label, $$.tipo);
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 			}
 			| TK_REAL
 			{
 				$$.tipo = "float";
 				$$.label = gentempcode();
-				atribuicaoVariavel = atribuicaoVariavel + "\t" + $$.tipo + " " + $$.label + ";\n";
+				addTemp($$.label, $$.tipo);
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 			}
 			| TK_CHAR
 			{
 				$$.tipo = "char";
 				$$.label = gentempcode();
+				addTemp($$.label, $$.tipo);
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 			}
 			| TK_ID
 			{
 				bool encontrei = false;
-				TIPO_SIMBOLO variavel;
+				TIPO_SIMBOLO variavel = getSimbolo($1.label);
 				for(int i = 0; i < tabelaSimbolos.size(); i++){
 					if(tabelaSimbolos[i].nomeVariavel == $1.label)
 					{
@@ -191,7 +179,7 @@ E 			: E '+' E
 
 				if(!encontrei)
 				{
-					yyerror("Não foi declarado a variavel " + $1.label);
+					yyerror("erro: a variavel '" + variavel.nomeVariavel + "' não foi instanciada");
 				}
 
 				$$.tipo = variavel.tipoVariavel;
@@ -222,12 +210,42 @@ void verificarVariavelRepetida(string variavel){
 	}
 }
 
+void verificarVariavelExistente(string nomeVariavel){
+	bool result = false;
+	for (int i = 0; i < tabelaSimbolos.size(); i++){
+		if(tabelaSimbolos[i].nomeVariavel == nomeVariavel){
+			result = true;
+		}
+	}
+	
+	if(!result)	{
+		yyerror("erro: a variavel '" + nomeVariavel + "' não foi instanciada");
+	}
+}
+
 TIPO_SIMBOLO getSimbolo(string variavel){
 	for (int i = 0; i < tabelaSimbolos.size(); i++)
 	{
 		if(tabelaSimbolos[i].nomeVariavel == variavel)
 			return tabelaSimbolos[i];					
 	}
+}
+
+void addSimbolo(string variavel, string tipo, string label){
+	TIPO_SIMBOLO valor;
+	valor.nomeVariavel = variavel;
+	valor.tipoVariavel = tipo;
+	valor.labelVariavel = label;
+	tabelaSimbolos.push_back(valor);
+	atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
+}
+
+void addTemp(string label, string tipo){
+	TIPO_TEMP valor;
+	valor.labelVariavel = label;
+	valor.tipoVariavel = tipo;
+	tabelaTemp.push_back(valor);
+	atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
 }
 
 int main(int argc, char* argv[]){

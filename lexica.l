@@ -15,37 +15,29 @@ ID {LETRA}({LETRA}|{NUM})*
 
 %%
 
-"\n"		{}
+"\n"		        {}
 
-{DELIM} 	{}
+{DELIM} 	        {}
 
-"main"		{return TK_MAIN;}
+"main"		        {return TK_MAIN;}
 
-"int"		{return TK_TIPO_INT;}
+"int"		        {return TK_TIPO_INT;}
 
-"float"		{return TK_TIPO_FLOAT;}
+"float"		        {return TK_TIPO_FLOAT;}
 
-"char"		{return TK_TIPO_CHAR;}
+"char"		        {return TK_TIPO_CHAR;}
 
-"boolean"	{return TK_TIPO_BOOLEAN;}
+"boolean"	        {return TK_TIPO_BOOLEAN;}
 
-[(){}[\];,]	{ return *yytext; }
+"True"              { return TK_TRUE; }
 
-[+\-*/]		{ return *yytext; }
+"False"             { return TK_FALSE; }
 
-"="		    { return *yytext; }
+[(){}[\];,]	        { return *yytext; }
 
-">"         {return *yytext;}
+[+\-*/%!&|<>""]		{ return *yytext; }
 
-"<"         {return *yytext;}
-
-">="        {return *yytext;}
-
-"<="        {return *yytext;}
-
-"=="        {return *yytext;}
-
-"!="        {return *yytext;}
+"="		            { return *yytext; }
 
 {NUM}		{ yylval.label = yytext; return TK_NUM; }
 {REAL}		{ yylval.label = yytext; return TK_REAL; }
