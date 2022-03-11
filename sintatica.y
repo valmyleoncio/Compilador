@@ -15,7 +15,6 @@ struct atributos
 	string label;
 	string traducao;
 	string tipo;
-	string conteudo;
 };
 
 typedef struct
@@ -34,7 +33,7 @@ typedef struct
 
 vector<TIPO_SIMBOLO> tabelaSimbolos;
 vector<TIPO_TEMP> tabelaTemp;
-string atribuicaoVariavel = "";
+string atribuicaoVariavel;
 
 int yylex(void);
 void yyerror(string);
@@ -112,30 +111,211 @@ COMANDO 	: E ';'
 E 			: E '+' E
 			{	
 				$$.label = gentempcode();
-				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + 
-				$$.label + " = " + $1.label + " + " + $3.label + ";\n";
+				string tipoAux;
+				string labelAux;
+
+				if($1.tipo == $3.tipo){
+					tipoAux = $1.tipo;
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = " + $1.label + " + " + $3.label + ";\n";
+					addTemp($$.label, tipoAux);
+				}
+				else if($1.tipo == "int" & $3.tipo == "float"){
+					tipoAux = "float";
+					addTemp($$.label, tipoAux);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $1.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, tipoAux);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + labelAux + " + " + $3.label + ";\n";
+				}
+				else if($1.tipo == "float" & $3.tipo == "int"){
+					tipoAux = "float";
+					addTemp($$.label, tipoAux);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $3.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, tipoAux);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + $1.label + " + " + labelAux + ";\n";
+				}
+				else{
+					yyerror("Operação inválida");
+				}
 			}
 			| E '-' E
 			{
 				$$.label = gentempcode();
-				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + 
-				$$.label + " = " + $1.label + " - " + $3.label + ";\n";
+				string tipoAux;
+				string labelAux;
+
+				if($1.tipo == $3.tipo){
+					tipoAux = $1.tipo;
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = " + $1.label + " - " + $3.label + ";\n";
+					addTemp($$.label, tipoAux);
+				}
+				else if($1.tipo == "int" & $3.tipo == "float"){
+					tipoAux = "float";
+					addTemp($$.label, tipoAux);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $1.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, tipoAux);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + labelAux + " - " + $3.label + ";\n";
+				}
+				else if($1.tipo == "float" & $3.tipo == "int"){
+					tipoAux = "float";
+					addTemp($$.label, tipoAux);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $3.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, tipoAux);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + $1.label + " - " + labelAux + ";\n";
+				}
+				else{
+					yyerror("Operação inválida");
+				}
 			}
 			| E '*' E
 			{
 				$$.label = gentempcode();
-				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + 
-				$$.label + " = " + $1.label + " * " + $3.label + ";\n";
+				string tipoAux;
+				string labelAux;
+
+				if($1.tipo == $3.tipo){
+					tipoAux = $1.tipo;
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = " + $1.label + " * " + $3.label + ";\n";
+					addTemp($$.label, tipoAux);
+				}
+				else if($1.tipo == "int" & $3.tipo == "float"){
+					tipoAux = "float";
+					addTemp($$.label, tipoAux);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $1.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, tipoAux);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + labelAux + " * " + $3.label + ";\n";
+				}
+				else if($1.tipo == "float" & $3.tipo == "int"){
+					tipoAux = "float";
+					addTemp($$.label, tipoAux);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $3.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, tipoAux);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + $1.label + " * " + labelAux + ";\n";
+				}
+				else{
+					yyerror("Operação inválida");
+				}
 			}
 			| E '/' E
 			{
 				$$.label = gentempcode();
+				string tipoAux;
+				string labelAux;
+
+				if($1.tipo == $3.tipo){
+					tipoAux = $1.tipo;
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = " + $1.label + " / " + $3.label + ";\n";
+					addTemp($$.label, tipoAux);
+				}
+				else if($1.tipo == "int" & $3.tipo == "float"){
+					tipoAux = "float";
+					addTemp($$.label, tipoAux);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $1.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, tipoAux);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + labelAux + " / " + $3.label + ";\n";
+				}
+				else if($1.tipo == "float" & $3.tipo == "int"){
+					tipoAux = "float";
+					addTemp($$.label, tipoAux);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $3.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, tipoAux);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + $1.label + " / " + labelAux + ";\n";
+				}
+				else{
+					yyerror("Operação inválida");
+				}
+			}
+			| E '%' E
+			{
+				$$.label = gentempcode();
 				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
-				$$.label + " = " + $1.label + " / " + $3.label + ";\n";
+				$$.label + " = " + $1.label + " % " + $3.label + ";\n";
+			}
+			| E '>' E
+			{
+				$$.label = gentempcode();
+				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + 
+				$$.label + " = " + $1.label + " > " + $3.label + ";\n";
+			}
+			| E '<' E
+			{
+				$$.label = gentempcode();
+				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + 
+				$$.label + " = " + $1.label + " < " + $3.label + ";\n";
+			}
+			| E '>''=' E
+			{
+				$$.label = gentempcode();
+				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + 
+				$$.label + " = " + $1.label + " >= " + $3.label + ";\n";
+			}
+			| E '<''=' E
+			{
+				$$.label = gentempcode();
+				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + 
+				$$.label + " = " + $1.label + " <= " + $3.label + ";\n";
+			}
+			| TK_ID '=''=' E
+			{
+				$$.label = gentempcode();
+				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + 
+				$$.label + " = " + $1.label + " == " + $3.label + ";\n";
+			}
+			| TK_ID '!''=' E
+			{
+				$$.label = gentempcode();
+				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + 
+				$$.label + " = " + $1.label + " != " + $3.label + ";\n";
 			}
 			| TK_ID '=' E
 			{
@@ -179,7 +359,7 @@ E 			: E '+' E
 
 				if(!encontrei)
 				{
-					yyerror("erro: a variavel '" + variavel.nomeVariavel + "' não foi instanciada");
+					yyerror("erro: a variavel '" + $1.label + "' não foi instanciada");
 				}
 
 				$$.tipo = variavel.tipoVariavel;

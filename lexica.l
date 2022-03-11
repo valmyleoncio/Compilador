@@ -1,6 +1,5 @@
 %{
 #include <string>
-int contLinha = 0;
 %}
 
 ESPACO [ \t]

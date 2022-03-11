@@ -8,7 +8,6 @@ all:
 commit:
 		git init
 		git add .
-		git commit -m "Primeira Etapa"
-		git branch -M Development
-		git push -u origin Development
-
+		git commit -m "Primeira Etapa - Iniciando Conversões"
+		git branch -M 1.3
+		git push -u 1.3
