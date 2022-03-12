@@ -116,6 +116,69 @@ E 			: E '+' E
 				$$.label = gentempcode();
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 			}
+<<<<<<< Updated upstream
+=======
+			| TK_ID
+			{
+				bool encontrei = false;
+				TIPO_SIMBOLO variavel = getSimbolo($1.label);
+				for(int i = 0; i < tabelaSimbolos.size(); i++)
+				{
+
+					if(tabelaSimbolos[i].nomeVariavel == $1.label)
+					{
+						variavel = tabelaSimbolos[i];
+						encontrei = true;
+					}	
+				}
+
+				if(!encontrei)
+				{
+					yyerror("erro: a variavel '" + $1.label + "' não foi instanciada");
+				}
+
+				$$.tipo = variavel.tipoVariavel;
+				$$.label = variavel.labelVariavel;
+				$$.traducao = "";
+			} // conversao explicita:
+			|TK_TIPO_FLOAT '('TK_ID')'
+			{ 
+				TIPO_SIMBOLO variavel = getSimbolo($1.label);
+				TIPO_SIMBOLO variavel2 = getSimbolo($3.label);
+
+				if (variavel.tipoVariavel == "float" && variavel2.tipoVariavel == "int")
+				{
+						$$.label = gentempcode();
+						$$.traducao = "\t" + $$.label + " = " + "(float) " + $3.label + ";\n";  
+				}
+					else
+					{
+								yyerror("operacao invalida ");
+					}  
+
+			}
+			|TK_TIPO_INT '('TK_ID')'
+			{ 
+				TIPO_SIMBOLO variavel = getSimbolo($1.label);
+				TIPO_SIMBOLO variavel2 = getSimbolo($3.label);
+
+					if (variavel.tipoVariavel == "int" && variavel2.tipoVariavel == "float")
+				{
+					$$.label = gentempcode();
+					$$.traducao = "\t" + $$.label + " = " + "(int) " + $3.label + ";\n";  
+				}
+					else
+					{
+						yyerror("operacao invalida");
+					}
+
+			}
+			
+			
+			
+			
+			
+>>>>>>> Stashed changes
 			;
 
 %%

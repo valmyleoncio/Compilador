@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 int main(){
     int abacate;
     abacate = 3;
@@ -5,3 +6,19 @@ int main(){
 }
 
     
+=======
+int main()
+{
+   
+int a;
+int b;
+float c;
+float d;
+
+d = float(a);
+b = int(c);
+b = 4.0;
+b = b + c;
+
+}
+>>>>>>> Stashed changes
