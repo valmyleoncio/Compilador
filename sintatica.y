@@ -372,6 +372,7 @@ E 			: E '+' E
 				TIPO_SIMBOLO variavel = getSimbolo($1.label);
 				TIPO_SIMBOLO variavel2 = getSimbolo($3.label);
 
+
 				if (variavel.tipoVariavel == "float" && variavel2.tipoVariavel == "int")
 				{
 						$$.label = gentempcode();
@@ -398,6 +399,37 @@ E 			: E '+' E
 						yyerror("operacao invalida");
 					}
 
+			}
+			|TK_TIPO_FLOAT '('E')'
+			{		
+				$$.label = gentempcode();
+				$$.tipo  = "int";
+				addTemp($$.label, $$.tipo);
+				
+				if($3.tipo == "int")
+					{	
+						$$.traducao = "\t" + $$.label + " = " + "(float) " + $3.label + ";\n";  
+					}else
+						{
+							yyerror("operacao invalida");
+						}
+
+			
+			}
+			|TK_TIPO_INT '('E')'
+			{	
+				$$.label = gentempcode();
+				$$.tipo  = "float";
+				addTemp($$.label, $$.tipo);
+
+				if($3.tipo == "float")
+						$$.traducao = "\t" + $$.label + " = " + "(int) " + $3.label + ";\n";  
+					else
+						{
+							yyerror("operacao invalida");
+						}
+
+			
 			}
 			;
 

@@ -2,6 +2,8 @@ int main()
 {
     int a;
     float b;
-    a = 5;
-    b = a * 3.0;
+    
+    b = float(3);
+    a = int(3.0);
+ 
 }
