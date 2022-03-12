@@ -366,6 +366,39 @@ E 			: E '+' E
 				$$.label = variavel.labelVariavel;
 				$$.traducao = "";
 			}
+			 // conversao explicita:
+			|TK_TIPO_FLOAT '('TK_ID')'
+			{ 
+				TIPO_SIMBOLO variavel = getSimbolo($1.label);
+				TIPO_SIMBOLO variavel2 = getSimbolo($3.label);
+
+				if (variavel.tipoVariavel == "float" && variavel2.tipoVariavel == "int")
+				{
+						$$.label = gentempcode();
+						$$.traducao = "\t" + $$.label + " = " + "(float) " + $3.label + ";\n";  
+				}
+					else
+					{
+								yyerror("operacao invalida ");
+					}  
+
+			}
+			|TK_TIPO_INT '('TK_ID')'
+			{ 
+				TIPO_SIMBOLO variavel = getSimbolo($1.label);
+				TIPO_SIMBOLO variavel2 = getSimbolo($3.label);
+
+					if (variavel.tipoVariavel == "int" && variavel2.tipoVariavel == "float")
+				{
+					$$.label = gentempcode();
+					$$.traducao = "\t" + $$.label + " = " + "(int) " + $3.label + ";\n";  
+				}
+					else
+					{
+						yyerror("operacao invalida");
+					}
+
+			}
 			;
 
 %%
