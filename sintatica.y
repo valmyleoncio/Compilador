@@ -231,8 +231,10 @@ E 			: E '+' E
 			| E '/' E
 			{
 				$$.label = gentempcode();
+	
 				string tipoAux;
 				string labelAux;
+	
 
 				if($1.tipo == $3.tipo){
 					tipoAux = $1.tipo;
@@ -376,7 +378,7 @@ E 			: E '+' E
 				if (variavel.tipoVariavel == "float" && variavel2.tipoVariavel == "int")
 				{
 						$$.label = gentempcode();
-						$$.traducao = "\t" + $$.label + " = " + "(float) " + $3.label + ";\n";  
+						$$.traducao =  "\t" + $$.label + " = " + "(float) " + $3.label + ";\n";  
 				}
 					else
 					{
@@ -403,7 +405,9 @@ E 			: E '+' E
 			|TK_TIPO_FLOAT '('E')'
 			{		
 				$$.label = gentempcode();
-				$$.tipo  = "int";
+				$$.tipo  = "float";
+				$3.traducao = "\t" + $1.label + "=" + $3.label + ";\n";
+
 				addTemp($$.label, $$.tipo);
 				
 				if($3.tipo == "int")
@@ -419,12 +423,14 @@ E 			: E '+' E
 			|TK_TIPO_INT '('E')'
 			{	
 				$$.label = gentempcode();
-				$$.tipo  = "float";
+				$$.tipo  = "int";
 				addTemp($$.label, $$.tipo);
+			
 
 				if($3.tipo == "float")
+					{
 						$$.traducao = "\t" + $$.label + " = " + "(int) " + $3.label + ";\n";  
-					else
+					}else
 						{
 							yyerror("operacao invalida");
 						}

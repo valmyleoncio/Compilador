@@ -2,8 +2,9 @@ int main()
 {
     int a;
     float b;
+
+    a = int(3.33);
+    b = float(4);
     
-    b = float(3);
-    a = int(3.0);
  
 }
