@@ -271,9 +271,18 @@ E 			: E '+' E
 			| E '%' E
 			{
 				$$.label = gentempcode();
-				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + 
-				$$.label + " = " + $1.label + " % " + $3.label + ";\n";
+				string tipoAux;
+				string labelAux;
+
+				if($1.tipo == "int" & $3.tipo == "int"){
+					tipoAux = $1.tipo;
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = " + $1.label + " % " + $3.label + ";\n";
+					addTemp($$.label, tipoAux);
+				}
+				else{
+					yyerror("operandos inválidos para % (Pois temos float)");
+				}
 			}
 			| E '>' E
 			{
@@ -303,19 +312,33 @@ E 			: E '+' E
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				$$.label + " = " + $1.label + " <= " + $3.label + ";\n";
 			}
-			| TK_ID '=''=' E
+			| E '=''=' E
 			{
 				$$.label = gentempcode();
 				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				$$.label + " = " + $1.label + " == " + $3.label + ";\n";
 			}
-			| TK_ID '!''=' E
+			| E '!''=' E
 			{
 				$$.label = gentempcode();
 				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				$$.label + " = " + $1.label + " != " + $3.label + ";\n";
+			}
+			| TK_ID '+''+'
+			{
+				verificarVariavelExistente($1.label);
+				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
+				$$.traducao = $1.traducao + $3.traducao + "\t" + 
+				variavel_1.labelVariavel + " = " + variavel_1.labelVariavel + " + 1" + ";\n";
+			}
+			| TK_ID '-''-'
+			{
+				verificarVariavelExistente($1.label);
+				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
+				$$.traducao = $1.traducao + $3.traducao + "\t" + 
+				variavel_1.labelVariavel + " = " + variavel_1.labelVariavel + " - 1" + ";\n";
 			}
 			| TK_ID '=' E
 			{
