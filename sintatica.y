@@ -15,6 +15,7 @@ struct atributos
 	string label;
 	string traducao;
 	string tipo;
+	string valor;
 };
 
 typedef struct
@@ -195,32 +196,32 @@ E 			: E '+' E
 				string labelAux;
 
 				if($1.tipo == $3.tipo){
-					tipoAux = $1.tipo;
+					$$.tipo = $1.tipo;
 					$$.traducao = $1.traducao + $3.traducao + "\t" + 
 					$$.label + " = " + $1.label + " * " + $3.label + ";\n";
-					addTemp($$.label, tipoAux);
+					addTemp($$.label, $$.tipo);
 				}
 				else if($1.tipo == "int" & $3.tipo == "float"){
-					tipoAux = "float";
-					addTemp($$.label, tipoAux);
+					$$.tipo = $3.tipo;
+					addTemp($$.label, $$.tipo);
 					$$.traducao = $1.traducao + $3.traducao + "\t" + 
 					$$.label + " = (float) " + $1.label + ";\n";
 
 					labelAux = $$.label;
 					$$.label = gentempcode();
-					addTemp($$.label, tipoAux);
+					addTemp($$.label, $$.tipo);
 					$$.traducao = $$.traducao + "\t"+
 					$$.label + " = " + labelAux + " * " + $3.label + ";\n";
 				}
 				else if($1.tipo == "float" & $3.tipo == "int"){
-					tipoAux = "float";
-					addTemp($$.label, tipoAux);
+					$$.tipo = $1.tipo;
+					addTemp($$.label, $$.tipo);
 					$$.traducao = $1.traducao + $3.traducao + "\t" + 
 					$$.label + " = (float) " + $3.label + ";\n";
 
 					labelAux = $$.label;
 					$$.label = gentempcode();
-					addTemp($$.label, tipoAux);
+					addTemp($$.label, $$.tipo);
 					$$.traducao = $$.traducao + "\t"+
 					$$.label + " = " + $1.label + " * " + labelAux + ";\n";
 				}
@@ -233,6 +234,11 @@ E 			: E '+' E
 				$$.label = gentempcode();
 				string tipoAux;
 				string labelAux;
+
+				if($3.valor == "0")
+				{
+					yyerror("Divisão por zero inválida");
+				}
 
 				if($1.tipo == $3.tipo){
 					tipoAux = $1.tipo;
@@ -340,12 +346,68 @@ E 			: E '+' E
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				variavel_1.labelVariavel + " = " + variavel_1.labelVariavel + " - 1" + ";\n";
 			}
+			|TK_TIPO_FLOAT '(' E ')'
+			{		
+				$$.label = gentempcode();
+				$$.tipo  = "float";
+
+				addTemp($$.label, $$.tipo);
+				
+				if($3.tipo == "int")
+				{	
+					$$.traducao = $3.traducao + "\t" + 
+					$$.label + " = " + "(float) " + $3.label + ";\n";  
+				}else
+				{
+					yyerror("operacao invalida");
+				}
+			}
+			|TK_TIPO_INT '(' E ')'
+			{	
+				$$.label = gentempcode();
+				$$.tipo  = "int";
+				addTemp($$.label, $$.tipo);
+
+				if($3.tipo == "float")
+				{
+					$$.traducao = $3.traducao + "\t" + 
+					$$.label + " = " + "(int) " + $3.label + ";\n";
+				}else
+				{
+					yyerror("operacao invalida");
+				}
+			}
 			| TK_ID '=' E
 			{
 				verificarVariavelExistente($1.label);
-				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
-				$$.traducao = $1.traducao + $3.traducao + "\t" + 
-				variavel_1.labelVariavel + " = " + $3.label + ";\n";
+				TIPO_SIMBOLO variavel = getSimbolo($1.label);
+				
+				cout << variavel.tipoVariavel;
+				cout << $3.tipo;
+
+				if(variavel.tipoVariavel == $3.tipo){
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+				    variavel.labelVariavel + " = " + $3.label + ";\n";
+				}
+				else if (variavel.tipoVariavel == "int" & $3.tipo == "float")
+				{
+					$$.label = gentempcode();
+					addTemp($$.label, "int");
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (int) " + $3.label + ";\n" + "\t" + 
+					variavel.labelVariavel + " = " + $$.label + ";\n";
+				}
+				else if (variavel.tipoVariavel == "float" & $3.tipo == "int")
+				{
+					$$.label = gentempcode();
+					addTemp($$.label, "float");
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $3.label + ";\n" + "\t" + 
+					variavel.labelVariavel + " = " + $$.label + ";\n";
+				}
+				else{
+					yyerror("Atribuição inválida");
+				}
 			}
 			| TK_NUM
 			{
@@ -353,6 +415,7 @@ E 			: E '+' E
 				$$.label = gentempcode();
 				addTemp($$.label, $$.tipo);
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+				$$.valor = $1.label;
 			}
 			| TK_REAL
 			{
@@ -360,6 +423,7 @@ E 			: E '+' E
 				$$.label = gentempcode();
 				addTemp($$.label, $$.tipo);
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+				$$.valor = $1.label;
 			}
 			| TK_CHAR
 			{
@@ -390,7 +454,6 @@ E 			: E '+' E
 				$$.traducao = "";
 			}
 			;
-
 %%
 
 #include "lex.yy.c"

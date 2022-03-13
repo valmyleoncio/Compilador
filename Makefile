@@ -9,5 +9,5 @@ commit:
 		git init
 		git add .
 		git commit -m "Primeira Etapa - Iniciando Conversões"
-		git branch -M 1.3
-		git push -u origin 1.3
+		git branch -M 1.6
+		git push -u origin 1.6

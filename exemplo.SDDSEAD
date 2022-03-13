@@ -1,3 +1,34 @@
 int main()
 {
+    int a;
+    int b;
+
+    a = 5;
+    b = a * 3.0;
 }
+
+
+
+
+
+Exemplos:
+
+int a;
+int b;
+
+a = 5;
+b = a * 3.0;
+______________
+
+int a;
+float b;
+
+a = 5;
+b = a * 3;
+______________
+
+int a;
+float b;
+
+a = 5;
+b = int(a * 3.0);
