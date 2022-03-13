@@ -60,8 +60,16 @@ extern int yydebug;
     TK_TIPO_BOOLEAN = 266,
     TK_TRUE = 267,
     TK_FALSE = 268,
-    TK_FIM = 269,
-    TK_ERROR = 270
+    TK_MAIOR_IGUAL = 269,
+    TK_MENOR_IGUAL = 270,
+    TK_IGUAL_IGUAL = 271,
+    TK_DIFERENTE = 272,
+    TK_MAIS_MAIS = 273,
+    TK_MENOS_MENOS = 274,
+    TK_OU = 275,
+    TK_E = 276,
+    TK_FIM = 277,
+    TK_ERROR = 278
   };
 #endif
 /* Tokens.  */
@@ -76,8 +84,16 @@ extern int yydebug;
 #define TK_TIPO_BOOLEAN 266
 #define TK_TRUE 267
 #define TK_FALSE 268
-#define TK_FIM 269
-#define TK_ERROR 270
+#define TK_MAIOR_IGUAL 269
+#define TK_MENOR_IGUAL 270
+#define TK_IGUAL_IGUAL 271
+#define TK_DIFERENTE 272
+#define TK_MAIS_MAIS 273
+#define TK_MENOS_MENOS 274
+#define TK_OU 275
+#define TK_E 276
+#define TK_FIM 277
+#define TK_ERROR 278
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

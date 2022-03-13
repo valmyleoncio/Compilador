@@ -5,10 +5,11 @@
 ESPACO [ \t]
 DIGITO [0-9]
 LETRA [A-Za-z_]
+SINAL [-]
 
 DELIM {ESPACO}+
-NUM {DIGITO}+
-REAL {NUM}+("."{NUM}+)?
+NUM ({SINAL}({DIGITO}+)|{DIGITO}+)
+REAL {NUM}+("."{DIGITO}+)?
 CHAR \'({LETRA}|{NUM})\'
 ID {LETRA}({LETRA}|{NUM})*
 
@@ -28,15 +29,31 @@ ID {LETRA}({LETRA}|{NUM})*
 
 "boolean"	        {return TK_TIPO_BOOLEAN;}
 
-"True"              { return TK_TRUE; }
+"true"              { return TK_TRUE; }
 
-"False"             { return TK_FALSE; }
+"false"             { return TK_FALSE; }
 
 [(){}[\];,]	        { return *yytext; }
 
 [+\-*/%!&|<>""]		{ return *yytext; }
 
 "="		            { return *yytext; }
+
+">="		        { return TK_MAIOR_IGUAL; }
+
+"<="		        { return TK_MENOR_IGUAL; }
+
+"=="		        { return TK_IGUAL_IGUAL; }
+
+"!="		        { return TK_DIFERENTE; }
+
+"++"		        { return TK_MAIS_MAIS; }
+
+"--"		        { return TK_MENOS_MENOS; }
+
+"||"		        { return TK_OU; }
+
+"&&"		        { return TK_E; }
 
 {NUM}		{ yylval.label = yytext; return TK_NUM; }
 {REAL}		{ yylval.label = yytext; return TK_REAL; }
