@@ -475,7 +475,8 @@ M 			: M '*' P
 			}
 			;
 
-P 			: TK_NUM
+P 			: '(' E ')'
+			| TK_NUM
 			{
 				$$.tipo = "int";
 				$$.label = gentempcode();
