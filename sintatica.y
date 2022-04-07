@@ -105,13 +105,13 @@ COMANDO 	: E ';'
 			| TK_TIPO_BOOLEAN TK_ID ';'
 			{
 				verificarVariavelRepetida($2.label);
-				addSimbolo($2.label, "boolean", gentempcode());
+				addSimbolo($2.label, "int", gentempcode());
 				$$.traducao = "";
 				$$.label = "";
 			}
 			;
 
-E 			: E '+' E
+E 			: E '+' M
 			{
 				$$.label = gentempcode();
 				string tipoAux;
@@ -151,7 +151,7 @@ E 			: E '+' E
 					yyerror("Operação inválida");
 				}
 			}
-			| E '-' E
+			| E '-' M
 			{
 				$$.label = gentempcode();
 				string tipoAux;
@@ -191,127 +191,11 @@ E 			: E '+' E
 					yyerror("Operação inválida");
 				}
 			}
-			| E '*' E
-			{
-				$$.label = gentempcode();
-				string tipoAux;
-				string labelAux;
-
-				if($1.tipo == $3.tipo){
-					$$.tipo = $1.tipo;
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
-					$$.label + " = " + $1.label + " * " + $3.label + ";\n";
-					addTemp($$.label, $$.tipo);
-				}
-				else if($1.tipo == "int" & $3.tipo == "float"){
-					$$.tipo = $3.tipo;
-					addTemp($$.label, $$.tipo);
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
-					$$.label + " = (float) " + $1.label + ";\n";
-
-					labelAux = $$.label;
-					$$.label = gentempcode();
-					addTemp($$.label, $$.tipo);
-					$$.traducao = $$.traducao + "\t"+
-					$$.label + " = " + labelAux + " * " + $3.label + ";\n";
-				}
-				else if($1.tipo == "float" & $3.tipo == "int"){
-					$$.tipo = $1.tipo;
-					addTemp($$.label, $$.tipo);
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
-					$$.label + " = (float) " + $3.label + ";\n";
-
-					labelAux = $$.label;
-					$$.label = gentempcode();
-					addTemp($$.label, $$.tipo);
-					$$.traducao = $$.traducao + "\t"+
-					$$.label + " = " + $1.label + " * " + labelAux + ";\n";
-				}
-				else{
-					yyerror("Operação inválida");
-				}
-			}
-			| E '/' E
-			{
-				$$.label = gentempcode();
-				string tipoAux;
-				string labelAux;
-				
-				string aux = $3.valor;
-				int cont = 0;
-				int ponto = 0;
-
-				for(int i = 0; i < aux.size(); i++)
-				{
-					if(aux[i] == '.')
-					{
-						ponto = 1;
-					}
-					if(aux[i] == '0')
-					{
-						cont++;
-					}
-				}
-
-				if(cont == aux.size() || (cont + ponto) == aux.size()){
-					yyerror("Operação inválida, Divisão por 0");
-				}
-
-				if($1.tipo == $3.tipo){
-					tipoAux = $1.tipo;
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
-					$$.label + " = " + $1.label + " / " + $3.label + ";\n";
-					addTemp($$.label, tipoAux);
-				}
-				else if($1.tipo == "int" & $3.tipo == "float"){
-					tipoAux = "float";
-					addTemp($$.label, tipoAux);
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
-					$$.label + " = (float) " + $1.label + ";\n";
-
-					labelAux = $$.label;
-					$$.label = gentempcode();
-					addTemp($$.label, tipoAux);
-					$$.traducao = $$.traducao + "\t"+
-					$$.label + " = " + labelAux + " / " + $3.label + ";\n";
-				}
-				else if($1.tipo == "float" & $3.tipo == "int"){
-					tipoAux = "float";
-					addTemp($$.label, tipoAux);
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
-					$$.label + " = (float) " + $3.label + ";\n";
-
-					labelAux = $$.label;
-					$$.label = gentempcode();
-					addTemp($$.label, tipoAux);
-					$$.traducao = $$.traducao + "\t"+
-					$$.label + " = " + $1.label + " / " + labelAux + ";\n";
-				}
-				else{
-					yyerror("Operação inválida");
-				}
-			}
-			| E '%' E
-			{
-				$$.label = gentempcode();
-				string tipoAux;
-				string labelAux;
-
-				if($1.tipo == "int" & $3.tipo == "int"){
-					tipoAux = $1.tipo;
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
-					$$.label + " = " + $1.label + " % " + $3.label + ";\n";
-					addTemp($$.label, tipoAux);
-				}
-				else{
-					yyerror("operandos inválidos para % (Pois temos float)");
-				}
-			}
 			| E '>' E
 			{
 				verificarOperacaoRelacional($1.tipo, $3.tipo);
 				$$.label = gentempcode();
-				addTemp($$.label, "boolean");
+				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				$$.label + " = " + $1.label + " > " + $3.label + ";\n";
 			}
@@ -319,7 +203,7 @@ E 			: E '+' E
 			{
 				verificarOperacaoRelacional($1.tipo, $3.tipo);
 				$$.label = gentempcode();
-				addTemp($$.label, "boolean");
+				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				$$.label + " = " + $1.label + " < " + $3.label + ";\n";
 			}
@@ -327,7 +211,7 @@ E 			: E '+' E
 			{
 				verificarOperacaoRelacional($1.tipo, $3.tipo);
 				$$.label = gentempcode();
-				addTemp($$.label, "boolean");
+				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				$$.label + " = " + $1.label + " >= " + $3.label + ";\n";
 			}
@@ -335,7 +219,7 @@ E 			: E '+' E
 			{
 				verificarOperacaoRelacional($1.tipo, $3.tipo);
 				$$.label = gentempcode();
-				addTemp($$.label, "boolean");
+				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				$$.label + " = " + $1.label + " <= " + $3.label + ";\n";
 			}
@@ -343,7 +227,7 @@ E 			: E '+' E
 			{
 				verificarOperacaoRelacional($1.tipo, $3.tipo);
 				$$.label = gentempcode();
-				addTemp($$.label, "boolean");
+				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				$$.label + " = " + $1.label + " == " + $3.label + ";\n";
 			}
@@ -351,28 +235,29 @@ E 			: E '+' E
 			{
 				verificarOperacaoRelacional($1.tipo, $3.tipo);
 				$$.label = gentempcode();
-				addTemp($$.label, "boolean");
+				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				$$.label + " = " + $1.label + " != " + $3.label + ";\n";
 			}
 			| E TK_OU E
 			{
+				verificarOperacaoRelacional($1.tipo, $3.tipo);
 				$$.label = gentempcode();
-				addTemp($$.label, "boolean");
+				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				$$.label + " = " + $1.label + " || " + $3.label + ";\n";
 			}
 			| E TK_E E
 			{
 				$$.label = gentempcode();
-				addTemp($$.label, "boolean");
+				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
 				$$.label + " = " + $1.label + " && " + $3.label + ";\n";
 			}
 			| '!' E
 			{
 				$$.label = gentempcode();
-				addTemp($$.label, "boolean");
+				addTemp($$.label, "int");
 				$$.traducao = $2.traducao + "\t" + 
 				$$.label + " = " + "!" + $2.label + ";\n";
 			}
@@ -450,6 +335,149 @@ E 			: E '+' E
 					yyerror("Atribuição inválida");
 				}
 			}
+			| TK_ID '=' TK_TRUE
+			{
+			    verificarVariavelExistente($1.label);
+				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
+				$$.traducao = $1.traducao + $2.traducao + "\t" + 
+				variavel_1.labelVariavel + " = 1"  + ";\n";
+			}
+			| TK_ID '=' TK_FALSE
+			{
+				verificarVariavelExistente($1.label);
+				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
+				$$.traducao = $1.traducao + $2.traducao + "\t" + 
+				variavel_1.labelVariavel + " = 0"  + ";\n";
+			}
+			| M
+			{
+			}
+			;
+
+M 			: M '*' P
+			{
+				$$.label = gentempcode();
+				string tipoAux;
+				string labelAux;
+
+				if($1.tipo == $3.tipo){
+					$$.tipo = $1.tipo;
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = " + $1.label + " * " + $3.label + ";\n";
+					addTemp($$.label, $$.tipo);
+				}
+				else if($1.tipo == "int" & $3.tipo == "float"){
+					$$.tipo = $3.tipo;
+					addTemp($$.label, $$.tipo);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $1.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, $$.tipo);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + labelAux + " * " + $3.label + ";\n";
+				}
+				else if($1.tipo == "float" & $3.tipo == "int"){
+					$$.tipo = $1.tipo;
+					addTemp($$.label, $$.tipo);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $3.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, $$.tipo);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + $1.label + " * " + labelAux + ";\n";
+				}
+				else{
+					yyerror("Operação inválida");
+				}
+			}
+			| M '/' P
+			{
+				$$.label = gentempcode();
+				string tipoAux;
+				string labelAux;
+				
+				string aux = $3.valor;
+				int cont = 0;
+				int ponto = 0;
+
+				for(int i = 0; i < aux.size(); i++)
+				{
+					if(aux[i] == '.')
+					{
+						ponto = 1;
+					}
+					if(aux[i] == '0')
+					{
+						cont++;
+					}
+				}
+
+				if(cont == aux.size() || (cont + ponto) == aux.size()){
+					yyerror("Operação inválida, Divisão por 0");
+				}
+
+				if($1.tipo == $3.tipo){
+					tipoAux = $1.tipo;
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = " + $1.label + " / " + $3.label + ";\n";
+					addTemp($$.label, tipoAux);
+				}
+				else if($1.tipo == "int" & $3.tipo == "float"){
+					tipoAux = "float";
+					addTemp($$.label, tipoAux);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $1.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, tipoAux);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + labelAux + " / " + $3.label + ";\n";
+				}
+				else if($1.tipo == "float" & $3.tipo == "int"){
+					tipoAux = "float";
+					addTemp($$.label, tipoAux);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $3.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, tipoAux);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + $1.label + " / " + labelAux + ";\n";
+				}
+				else{
+					yyerror("Operação inválida");
+				}
+			}
+			| M '%' P
+			{
+				$$.label = gentempcode();
+				string tipoAux;
+				string labelAux;
+
+				if($1.tipo == "int" & $3.tipo == "int"){
+					tipoAux = $1.tipo;
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = " + $1.label + " % " + $3.label + ";\n";
+					addTemp($$.label, tipoAux);
+				}
+				else{
+					yyerror("operandos inválidos para % (Pois temos float)");
+				}
+			}
+			| P
+			{
+			}
+			;
+
+P 			: E 
+			{
+			}
 			| TK_NUM
 			{
 				$$.tipo = "int";
@@ -472,20 +500,6 @@ E 			: E '+' E
 				$$.label = gentempcode();
 				addTemp($$.label, $$.tipo);
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
-			}
-			| TK_ID '=' TK_TRUE
-			{
-			    verificarVariavelExistente($1.label);
-				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
-				$$.traducao = $1.traducao + $2.traducao + "\t" + 
-				variavel_1.labelVariavel + " = 1"  + ";\n";
-			}
-			| TK_ID '=' TK_FALSE
-			{
-				verificarVariavelExistente($1.label);
-				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
-				$$.traducao = $1.traducao + $2.traducao + "\t" + 
-				variavel_1.labelVariavel + " = 0"  + ";\n";
 			}
 			| TK_ID
 			{
@@ -570,7 +584,7 @@ void addTemp(string label, string tipo){
 }
 
 void verificarOperacaoRelacional(string tipo_1, string tipo_2){
-	if(tipo_1 == "char" || tipo_2 == "char" || tipo_1 == "boolean" || tipo_2 == "boolean" || tipo_1 == "boolean" || tipo_2 == "char" || tipo_1 == "char" ||tipo_2 == "boolean")
+	if(tipo_1 == "char" || tipo_2 == "char")
 	{
 		yyerror ("Operação relacional inválida");
 	}
