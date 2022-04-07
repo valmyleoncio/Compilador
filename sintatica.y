@@ -475,10 +475,7 @@ M 			: M '*' P
 			}
 			;
 
-P 			: E 
-			{
-			}
-			| TK_NUM
+P 			: TK_NUM
 			{
 				$$.tipo = "int";
 				$$.label = gentempcode();
