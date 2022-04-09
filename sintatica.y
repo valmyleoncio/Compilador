@@ -50,7 +50,7 @@ void verificarOperacaoRelacional(atributos tipo_1, atributos tipo_2);
 %token TK_NUM TK_REAL TK_CHAR TK_TRUE TK_FALSE
 %token TK_MAIN TK_ID TK_TIPO_INT TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOLEAN
 %token TK_MAIOR_IGUAL TK_MENOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MAIS_MAIS TK_MENOS_MENOS TK_OU TK_E
-%token TK_IF TK_ELSE TK_WHILE TK_FOR
+%token TK_IF TK_ELSE TK_WHILE TK_FOR TK_DO TK_SWITCH TK_CASE TK_BREAK TK_CONTINUE
 %token TK_ERROR
 
 %start S
@@ -79,6 +79,7 @@ COMANDOS	: COMANDO COMANDOS
 			{
 				$$.traducao = $1.traducao;
 			}
+
 			| TK_IF '(' E ')' E ';' COMANDOS
 			{
 				$$.traducao = $3.traducao + $5.traducao + $7.traducao;
@@ -87,21 +88,63 @@ COMANDOS	: COMANDO COMANDOS
 			{
 				$$.traducao = $3.traducao + $5.traducao + $8.traducao + $10.traducao;
 			}
-			| TK_IF '(' E ')' E ';' TK_ELSE BLOCO
+			| TK_IF '(' E ')' E ';' TK_ELSE BLOCO COMANDOS
 			{
-				$$.traducao = $3.traducao + $5.traducao + $8.traducao;
+				$$.traducao = $3.traducao + $5.traducao + $8.traducao + $9.traducao;
 			}
-			| TK_IF '(' E ')' BLOCO
+			| TK_IF '(' E ')' BLOCO COMANDOS
 			{
 				$$.traducao = $3.traducao + $5.traducao;
 			}
-			| TK_IF '(' E ')' BLOCO TK_ELSE BLOCO
+			| TK_IF '(' E ')' BLOCO TK_ELSE E ';' COMANDOS
+			{
+				$$.traducao = $3.traducao + $5.traducao + $7.traducao + $9.traducao;
+			}
+			| TK_IF '(' E ')' BLOCO TK_ELSE BLOCO COMANDOS
 			{
 				$$.traducao = $3.traducao + $5.traducao + $7.traducao;
 			}
-			| 
+
+
+			| TK_WHILE '(' E ')' BLOCO COMANDOS
+			{
+				$$.traducao = $3.traducao + $5.traducao + $6.traducao;
+			}
+			| TK_DO BLOCO TK_WHILE '(' E ')' ';' COMANDOS
+			{
+				$$.traducao = $2.traducao + $5.traducao + $8.traducao;
+			}
+			| TK_FOR '(' ';' ';' ')' BLOCO COMANDOS
+			{
+				$$.traducao = $6.traducao + $7.traducao;
+			}
+			| TK_FOR '(' ATRIBUICAO ';' RELACIONAL ';' E ')' BLOCO COMANDOS
+			{
+				$$.traducao = $3.traducao + $5.traducao + $7.traducao + $9.traducao + $10.traducao;
+			}
+			| TK_SWITCH '(' TK_NUM ')' '{' CASES '}' COMANDOS
+			{
+				$$.traducao = $3.traducao + $6.traducao + $8.traducao;
+			}
+			|
 			{
 				$$.traducao = "";
+			}
+			;
+
+CASES       : CASE CASES
+			{
+				$$.traducao = $1.traducao + $2.traducao;
+			}
+			|
+			{
+				$$.traducao = "";
+			}
+			;
+
+CASE        : TK_CASE TK_NUM ':' COMANDOS TK_BREAK ';'
+			{
+				$$.traducao = $2.traducao + $4.traducao;
 			}
 			;
 
@@ -216,7 +259,72 @@ E 			: E '+' M
 					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Operandos com tipo inválidos.");
 				}
 			}
-			| E '>' E
+			| TK_ID TK_MAIS_MAIS
+			{
+				verificarVariavelExistente($1.label);
+				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
+				$$.traducao = $1.traducao + $2.traducao + "\t" + 
+				variavel_1.labelVariavel + " = " + variavel_1.labelVariavel + " + 1" + ";\n";
+			}
+			| TK_ID TK_MENOS_MENOS
+			{
+				verificarVariavelExistente($1.label);
+				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
+				$$.traducao = $1.traducao + $2.traducao + "\t" + 
+				variavel_1.labelVariavel + " = " + variavel_1.labelVariavel + " - 1" + ";\n";
+			}
+			| TK_TIPO_FLOAT '(' E ')'
+			{		
+				$$.label = gentempcode();
+				$$.tipo  = "float";
+
+				addTemp($$.label, $$.tipo);
+				
+				if($3.tipo == "int")
+				{	
+					$$.traducao = $3.traducao + "\t" + 
+					$$.label + " = " + "(float) " + $3.label + ";\n";  
+				} else if ($3.tipo == "float")
+				{
+					$$.traducao = $3.traducao + "\t" + 
+					$$.label + " = " + "(float) " + $3.label + ";\n";
+					cout << "\n\033[1;33mWarning\033[0m - Linha " + std::to_string($3.linha) +  ": Muleque burro, ja é o tipo certo.\n";
+				}
+				else
+				{
+					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Casting inválido");
+				}
+			}
+			| TK_TIPO_INT '(' E ')'
+			{	
+				$$.label = gentempcode();
+				$$.tipo  = "int";
+				addTemp($$.label, $$.tipo);
+
+				if($3.tipo == "float")
+				{
+					$$.traducao = $3.traducao + "\t" + 
+					$$.label + " = " + "(int) " + $3.label + ";\n";
+				} else if ($3.tipo == "int"){
+					$$.traducao = $3.traducao + "\t" + 
+					$$.label + " = " + "(int) " + $3.label + ";\n";
+					cout << "\n\033[1;33mWarning\033[0m - Linha " + std::to_string($3.linha) +  ": Muleque burro, ja é o tipo certo.\n";
+				}else{
+					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Casting inválido");
+				}
+			}
+			| RELACIONAL
+			{
+			}
+			| ATRIBUICAO
+			{
+			}
+			| M
+			{
+			}
+			;
+
+RELACIONAL  : E '>' E
 			{
 				verificarOperacaoRelacional($1, $3);
 				$$.label = gentempcode();
@@ -286,61 +394,9 @@ E 			: E '+' M
 				$$.traducao = $2.traducao + "\t" + 
 				$$.label + " = " + "!" + $2.label + ";\n";
 			}
-			| TK_ID TK_MAIS_MAIS
-			{
-				verificarVariavelExistente($1.label);
-				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
-				$$.traducao = $1.traducao + $2.traducao + "\t" + 
-				variavel_1.labelVariavel + " = " + variavel_1.labelVariavel + " + 1" + ";\n";
-			}
-			| TK_ID TK_MENOS_MENOS
-			{
-				verificarVariavelExistente($1.label);
-				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
-				$$.traducao = $1.traducao + $2.traducao + "\t" + 
-				variavel_1.labelVariavel + " = " + variavel_1.labelVariavel + " - 1" + ";\n";
-			}
-			| TK_TIPO_FLOAT '(' E ')'
-			{		
-				$$.label = gentempcode();
-				$$.tipo  = "float";
+			;
 
-				addTemp($$.label, $$.tipo);
-				
-				if($3.tipo == "int")
-				{	
-					$$.traducao = $3.traducao + "\t" + 
-					$$.label + " = " + "(float) " + $3.label + ";\n";  
-				} else if ($3.tipo == "float")
-				{
-					$$.traducao = $3.traducao + "\t" + 
-					$$.label + " = " + "(float) " + $3.label + ";\n";
-					cout << "\n\033[1;33mWarning\033[0m - Linha " + std::to_string($3.linha) +  ": Muleque burro, ja é o tipo certo.\n";
-				}
-				else
-				{
-					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Casting inválido");
-				}
-			}
-			| TK_TIPO_INT '(' E ')'
-			{	
-				$$.label = gentempcode();
-				$$.tipo  = "int";
-				addTemp($$.label, $$.tipo);
-
-				if($3.tipo == "float")
-				{
-					$$.traducao = $3.traducao + "\t" + 
-					$$.label + " = " + "(int) " + $3.label + ";\n";
-				} else if ($3.tipo == "int"){
-					$$.traducao = $3.traducao + "\t" + 
-					$$.label + " = " + "(int) " + $3.label + ";\n";
-					cout << "\n\033[1;33mWarning\033[0m - Linha " + std::to_string($3.linha) +  ": Muleque burro, ja é o tipo certo.\n";
-				}else{
-					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Casting inválido");
-				}
-			}
-			| TK_ID '=' E
+ATRIBUICAO  : TK_ID '=' E
 			{
 				verificarVariavelExistente($1.label);
 				TIPO_SIMBOLO variavel = getSimbolo($1.label);
@@ -355,7 +411,6 @@ E 			: E '+' M
 					}
 					
 				}
-
 				else if (variavel.tipoVariavel == "int" & $3.tipo == "float")
 				{
 					$$.label = gentempcode();
@@ -375,9 +430,6 @@ E 			: E '+' M
 				else{
 					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Atribuição inválida, tipos diferentes.");
 				}
-			}
-			| M
-			{
 			}
 			;
 

@@ -8,6 +8,6 @@ all:
 commit:
 		git init
 		git add .
-		git commit -m "Boolean e tratamento de erro básico"
+		git commit -m "Boolean, estruturas(léxica)"
 		git branch -M 2.2
 		git push -u origin 2.2

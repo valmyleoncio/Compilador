@@ -42,7 +42,17 @@ ID {LETRA}({LETRA}|{NUM})*
 
 "for"               { return TK_FOR; }
 
-[(){}[\];,]	        { return *yytext; }
+"do"                { return TK_DO; }
+
+"switch"            { return TK_SWITCH; }
+
+"case"              { return TK_CASE; }
+
+"break"             { return TK_BREAK; }
+
+"continue"          { return TK_CONTINUE; }
+
+[(){}[\];,:]	    { return *yytext; }
 
 [+\-*/%!&|<>""]		{ return *yytext; }
 
