@@ -1,28 +1,5 @@
 int main()
 {
-   int a;
-   a = 1 + 4 / 10 * 10 + 10 * 10;
+   boolean a;
+   a = true || false;
 }
-
-
-Exemplos:
-
-int a;
-int b;
-
-a = 5;
-b = a * 3.0;
-______________
-
-int a;
-float b;
-
-a = 5;
-b = a * 3;
-______________
-
-int a;
-float b;
-
-a = 5;
-b = int(a * 3.0);

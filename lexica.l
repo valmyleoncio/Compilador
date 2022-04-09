@@ -1,5 +1,6 @@
 %{
 #include <string>
+int linhas = 1;
 %}
 
 ESPACO [ \t]
@@ -15,7 +16,7 @@ ID {LETRA}({LETRA}|{NUM})*
 
 %%
 
-"\n"		        {}
+"\n"		        {linhas++;}
 
 {DELIM} 	        {}
 
@@ -29,9 +30,9 @@ ID {LETRA}({LETRA}|{NUM})*
 
 "boolean"	        {return TK_TIPO_BOOLEAN;}
 
-"true"              { return TK_TRUE; }
+"true"              { yylval.linha = linhas; return TK_TRUE; }
 
-"false"             { return TK_FALSE; }
+"false"             { yylval.linha = linhas; return TK_FALSE; }
 
 [(){}[\];,]	        { return *yytext; }
 
@@ -55,13 +56,10 @@ ID {LETRA}({LETRA}|{NUM})*
 
 "&&"		        { return TK_E; }
 
-{NUM}		{ yylval.label = yytext; return TK_NUM; }
-{REAL}		{ yylval.label = yytext; return TK_REAL; }
-{CHAR}		{ yylval.label = yytext; return TK_CHAR; }
-{ID}		{ yylval.label = yytext; return TK_ID; }
+{NUM}		{ yylval.label = yytext; yylval.linha = linhas; return TK_NUM; }
+{REAL}		{ yylval.label = yytext; yylval.linha = linhas; return TK_REAL; }
+{CHAR}		{ yylval.label = yytext; yylval.linha = linhas; return TK_CHAR; }
+{ID}		{ yylval.label = yytext; yylval.linha = linhas; return TK_ID; }
 
 .			{ *yytext; }
-
-
 %%
-

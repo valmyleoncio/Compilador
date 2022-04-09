@@ -16,6 +16,7 @@ struct atributos
 	string traducao;
 	string tipo;
 	string valor;
+	int linha;
 };
 
 typedef struct
@@ -31,7 +32,6 @@ typedef struct
 	string labelVariavel;
 }	TIPO_TEMP;
 
-
 vector<TIPO_SIMBOLO> tabelaSimbolos;
 vector<TIPO_TEMP> tabelaTemp;
 string atribuicaoVariavel;
@@ -44,7 +44,7 @@ void verificarVariavelExistente(string nomeVariavel);
 TIPO_SIMBOLO getSimbolo(string variavel);
 void addSimbolo(string variavel, string tipo, string label);
 void addTemp(string label, string tipo);
-void verificarOperacaoRelacional(string tipo_1, string tipo_2);
+void verificarOperacaoRelacional(atributos tipo_1, atributos tipo_2);
 %}
 
 %token TK_NUM TK_REAL TK_CHAR
@@ -105,7 +105,7 @@ COMANDO 	: E ';'
 			| TK_TIPO_BOOLEAN TK_ID ';'
 			{
 				verificarVariavelRepetida($2.label);
-				addSimbolo($2.label, "int", gentempcode());
+				addSimbolo($2.label, "boolean", gentempcode());
 				$$.traducao = "";
 				$$.label = "";
 			}
@@ -148,7 +148,7 @@ E 			: E '+' M
 					$$.label + " = " + $1.label + " + " + labelAux + ";\n";
 				}
 				else{
-					yyerror("Operação inválida");
+					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Operandos com tipo inválidos.");
 				}
 			}
 			| E '-' M
@@ -188,12 +188,12 @@ E 			: E '+' M
 					$$.label + " = " + $1.label + " - " + labelAux + ";\n";
 				}
 				else{
-					yyerror("Operação inválida");
+					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Operandos com tipo inválidos.");
 				}
 			}
 			| E '>' E
 			{
-				verificarOperacaoRelacional($1.tipo, $3.tipo);
+				verificarOperacaoRelacional($1, $3);
 				$$.label = gentempcode();
 				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
@@ -201,7 +201,7 @@ E 			: E '+' M
 			}
 			| E '<' E
 			{
-				verificarOperacaoRelacional($1.tipo, $3.tipo);
+				verificarOperacaoRelacional($1, $3);
 				$$.label = gentempcode();
 				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
@@ -209,7 +209,7 @@ E 			: E '+' M
 			}
 			| E TK_MAIOR_IGUAL E
 			{
-				verificarOperacaoRelacional($1.tipo, $3.tipo);
+				verificarOperacaoRelacional($1, $3);
 				$$.label = gentempcode();
 				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
@@ -217,7 +217,7 @@ E 			: E '+' M
 			}
 			| E TK_MENOR_IGUAL E
 			{
-				verificarOperacaoRelacional($1.tipo, $3.tipo);
+				verificarOperacaoRelacional($1, $3);
 				$$.label = gentempcode();
 				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
@@ -225,7 +225,7 @@ E 			: E '+' M
 			}
 			| E TK_IGUAL_IGUAL E
 			{
-				verificarOperacaoRelacional($1.tipo, $3.tipo);
+				verificarOperacaoRelacional($1, $3);
 				$$.label = gentempcode();
 				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
@@ -233,7 +233,7 @@ E 			: E '+' M
 			}
 			| E TK_DIFERENTE E
 			{
-				verificarOperacaoRelacional($1.tipo, $3.tipo);
+				verificarOperacaoRelacional($1, $3);
 				$$.label = gentempcode();
 				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
@@ -241,7 +241,7 @@ E 			: E '+' M
 			}
 			| E TK_OU E
 			{
-				verificarOperacaoRelacional($1.tipo, $3.tipo);
+				verificarOperacaoRelacional($1, $3);
 				$$.label = gentempcode();
 				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
@@ -275,7 +275,7 @@ E 			: E '+' M
 				$$.traducao = $1.traducao + $2.traducao + "\t" + 
 				variavel_1.labelVariavel + " = " + variavel_1.labelVariavel + " - 1" + ";\n";
 			}
-			|TK_TIPO_FLOAT '(' E ')'
+			| TK_TIPO_FLOAT '(' E ')'
 			{		
 				$$.label = gentempcode();
 				$$.tipo  = "float";
@@ -286,12 +286,18 @@ E 			: E '+' M
 				{	
 					$$.traducao = $3.traducao + "\t" + 
 					$$.label + " = " + "(float) " + $3.label + ";\n";  
-				}else
+				} else if ($3.tipo == "float")
 				{
-					yyerror("operacao invalida");
+					$$.traducao = $3.traducao + "\t" + 
+					$$.label + " = " + "(float) " + $3.label + ";\n";
+					cout << "\n\033[1;33mWarning\033[0m - Linha " + std::to_string($3.linha) +  ": Muleque burro, ja é o tipo certo.\n";
+				}
+				else
+				{
+					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Casting inválido");
 				}
 			}
-			|TK_TIPO_INT '(' E ')'
+			| TK_TIPO_INT '(' E ')'
 			{	
 				$$.label = gentempcode();
 				$$.tipo  = "int";
@@ -301,9 +307,12 @@ E 			: E '+' M
 				{
 					$$.traducao = $3.traducao + "\t" + 
 					$$.label + " = " + "(int) " + $3.label + ";\n";
-				}else
-				{
-					yyerror("operacao invalida");
+				} else if ($3.tipo == "int"){
+					$$.traducao = $3.traducao + "\t" + 
+					$$.label + " = " + "(int) " + $3.label + ";\n";
+					cout << "\n\033[1;33mWarning\033[0m - Linha " + std::to_string($3.linha) +  ": Muleque burro, ja é o tipo certo.\n";
+				}else{
+					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Casting inválido");
 				}
 			}
 			| TK_ID '=' E
@@ -312,9 +321,16 @@ E 			: E '+' M
 				TIPO_SIMBOLO variavel = getSimbolo($1.label);
 
 				if(variavel.tipoVariavel == $3.tipo){
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
-				    variavel.labelVariavel + " = " + $3.label + ";\n";
+					if($3.tipo == "boolean"){
+						$$.traducao = $1.traducao  + $3.traducao +"\t" + 
+				    	variavel.labelVariavel + " = " + $3.label + ";\n";
+					} else {
+						$$.traducao = $1.traducao + $3.traducao + "\t" + 
+				    	variavel.labelVariavel + " = " + $3.label + ";\n";
+					}
+					
 				}
+
 				else if (variavel.tipoVariavel == "int" & $3.tipo == "float")
 				{
 					$$.label = gentempcode();
@@ -332,22 +348,8 @@ E 			: E '+' M
 					variavel.labelVariavel + " = " + $$.label + ";\n";
 				}
 				else{
-					yyerror("Atribuição inválida");
+					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Atribuição inválida, tipos diferentes.");
 				}
-			}
-			| TK_ID '=' TK_TRUE
-			{
-			    verificarVariavelExistente($1.label);
-				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
-				$$.traducao = $1.traducao + $2.traducao + "\t" + 
-				variavel_1.labelVariavel + " = 1"  + ";\n";
-			}
-			| TK_ID '=' TK_FALSE
-			{
-				verificarVariavelExistente($1.label);
-				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
-				$$.traducao = $1.traducao + $2.traducao + "\t" + 
-				variavel_1.labelVariavel + " = 0"  + ";\n";
 			}
 			| M
 			{
@@ -391,7 +393,7 @@ M 			: M '*' P
 					$$.label + " = " + $1.label + " * " + labelAux + ";\n";
 				}
 				else{
-					yyerror("Operação inválida");
+					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Operandos com tipos inválidos.");
 				}
 			}
 			| M '/' P
@@ -417,7 +419,7 @@ M 			: M '*' P
 				}
 
 				if(cont == aux.size() || (cont + ponto) == aux.size()){
-					yyerror("Operação inválida, Divisão por 0");
+					yyerror("\n\033[1;31mError\033[0m - \033[1;36mLinha " + std::to_string($3.linha) +  ":\033[0m\033[1;39m Operação inválida, divisão por 0");
 				}
 
 				if($1.tipo == $3.tipo){
@@ -451,7 +453,7 @@ M 			: M '*' P
 					$$.label + " = " + $1.label + " / " + labelAux + ";\n";
 				}
 				else{
-					yyerror("Operação inválida");
+					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Operandos com tipos inválidos.");
 				}
 			}
 			| M '%' P
@@ -467,7 +469,7 @@ M 			: M '*' P
 					addTemp($$.label, tipoAux);
 				}
 				else{
-					yyerror("operandos inválidos para % (Pois temos float)");
+					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": operandos inválidos para % (Presença de float).");
 				}
 			}
 			| P
@@ -499,6 +501,20 @@ P 			: '(' E ')'
 				addTemp($$.label, $$.tipo);
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 			}
+			| TK_TRUE
+			{
+				$$.tipo = "boolean";
+				$$.label = gentempcode();
+				addTemp($$.label, "int");
+				$$.traducao = "\t" + $$.label + " = " + "1" + ";\n";	
+			}
+			| TK_FALSE
+			{
+				$$.tipo = "boolean";
+				$$.label = gentempcode();
+				addTemp($$.label, "int");
+				$$.traducao = "\t" + $$.label + " = " + "0" + ";\n";		
+			}
 			| TK_ID
 			{
 				bool encontrei = false;
@@ -513,7 +529,7 @@ P 			: '(' E ')'
 
 				if(!encontrei)
 				{
-					yyerror("erro: a variavel '" + $1.label + "' não foi instanciada");
+					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($1.linha) +  ": A variavel '" + $1.label + "' não foi instanciada.");
 				}
 
 				$$.tipo = variavel.tipoVariavel;
@@ -552,7 +568,8 @@ void verificarVariavelExistente(string nomeVariavel){
 	}
 	
 	if(!result)	{
-		yyerror("erro: a variavel '" + nomeVariavel + "' não foi instanciada");
+		yyerror("\n\033[1;31mError\033[0m - Linha : A variável '" + nomeVariavel + "' não foi instanciada");
+
 	}
 }
 
@@ -570,6 +587,9 @@ void addSimbolo(string variavel, string tipo, string label){
 	valor.tipoVariavel = tipo;
 	valor.labelVariavel = label;
 	tabelaSimbolos.push_back(valor);
+	if(valor.tipoVariavel == "boolean"){
+		valor.tipoVariavel = "int";
+	}
 	atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
 }
 
@@ -581,10 +601,10 @@ void addTemp(string label, string tipo){
 	atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
 }
 
-void verificarOperacaoRelacional(string tipo_1, string tipo_2){
-	if(tipo_1 == "char" || tipo_2 == "char")
+void verificarOperacaoRelacional(atributos tipo_1, atributos tipo_2){
+	if(tipo_1.tipo == "char" || tipo_2.tipo == "char")
 	{
-		yyerror ("Operação relacional inválida");
+		yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string(tipo_1.linha) +  ": Operação relacional inválida.");
 	}
 }
 

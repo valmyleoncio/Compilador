@@ -8,6 +8,6 @@ all:
 commit:
 		git init
 		git add .
-		git commit -m "Segunda Etapa - Iniciada"
-		git branch -M 1.8
-		git push -u origin 1.8
+		git commit -m "Boolean e tratamento de erro básico"
+		git branch -M 2.2
+		git push -u origin 2.2
