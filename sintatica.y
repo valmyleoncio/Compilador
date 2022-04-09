@@ -10,6 +10,9 @@ using namespace std;
 
 int var_temp_qnt;
 
+string error = "";
+string warning = "";
+
 struct atributos
 {
 	string label;
@@ -179,7 +182,7 @@ COMANDO 	: E ';'
 			}
 			;
 
-E 			: E '+' M
+E 			: M '+' E
 			{
 				$$.label = gentempcode();
 				string tipoAux;
@@ -216,47 +219,47 @@ E 			: E '+' M
 					$$.label + " = " + $1.label + " + " + labelAux + ";\n";
 				}
 				else{
-					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Operandos com tipo inválidos.");
+					yyerror("\n\033[1;31mError\033[0m - \033[1;36mLinha " + std::to_string($3.linha) +  ":\033[0m\033[1;39m Operandos com tipos inválidos.");
 				}
 			}
-			| E '-' M
+			| M '-' E
 			{
 				$$.label = gentempcode();
 				string tipoAux;
 				string labelAux;
 
 				if($1.tipo == $3.tipo){
-					tipoAux = $1.tipo;
+					$$.tipo = $1.tipo;
 					$$.traducao = $1.traducao + $3.traducao + "\t" + 
 					$$.label + " = " + $1.label + " - " + $3.label + ";\n";
-					addTemp($$.label, tipoAux);
+					addTemp($$.label, $$.tipo);
 				}
 				else if($1.tipo == "int" & $3.tipo == "float"){
-					tipoAux = "float";
-					addTemp($$.label, tipoAux);
+					$$.tipo = $3.tipo;
+					addTemp($$.label, $$.tipo);
 					$$.traducao = $1.traducao + $3.traducao + "\t" + 
 					$$.label + " = (float) " + $1.label + ";\n";
 
 					labelAux = $$.label;
 					$$.label = gentempcode();
-					addTemp($$.label, tipoAux);
+					addTemp($$.label, $$.tipo);
 					$$.traducao = $$.traducao + "\t"+
 					$$.label + " = " + labelAux + " - " + $3.label + ";\n";
 				}
 				else if($1.tipo == "float" & $3.tipo == "int"){
-					tipoAux = "float";
-					addTemp($$.label, tipoAux);
+					$$.tipo = $1.tipo;
+					addTemp($$.label, $$.tipo);
 					$$.traducao = $1.traducao + $3.traducao + "\t" + 
 					$$.label + " = (float) " + $3.label + ";\n";
 
 					labelAux = $$.label;
 					$$.label = gentempcode();
-					addTemp($$.label, tipoAux);
+					addTemp($$.label, $$.tipo);
 					$$.traducao = $$.traducao + "\t"+
 					$$.label + " = " + $1.label + " - " + labelAux + ";\n";
 				}
 				else{
-					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Operandos com tipo inválidos.");
+					yyerror("\n\033[1;31mError\033[0m - \033[1;36mLinha " + std::to_string($3.linha) +  ":\033[0m\033[1;39m Operandos com tipos inválidos.");
 				}
 			}
 			| TK_ID TK_MAIS_MAIS
@@ -398,18 +401,12 @@ RELACIONAL  : E '>' E
 
 ATRIBUICAO  : TK_ID '=' E
 			{
+				cout << "\n\nCaiu aki krl\n\n";
 				verificarVariavelExistente($1.label);
 				TIPO_SIMBOLO variavel = getSimbolo($1.label);
-
 				if(variavel.tipoVariavel == $3.tipo){
-					if($3.tipo == "boolean"){
-						$$.traducao = $1.traducao  + $3.traducao +"\t" + 
-				    	variavel.labelVariavel + " = " + $3.label + ";\n";
-					} else {
-						$$.traducao = $1.traducao + $3.traducao + "\t" + 
-				    	variavel.labelVariavel + " = " + $3.label + ";\n";
-					}
-					
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+				    variavel.labelVariavel + " = " + $3.label + ";\n";
 				}
 				else if (variavel.tipoVariavel == "int" & $3.tipo == "float")
 				{
@@ -470,7 +467,7 @@ M 			: M '*' P
 					$$.label + " = " + $1.label + " * " + labelAux + ";\n";
 				}
 				else{
-					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Operandos com tipos inválidos.");
+					yyerror("\n\033[1;31mError\033[0m - \033[1;36mLinha " + std::to_string($3.linha) +  ":\033[0m\033[1;39m Operandos com tipos inválidos.");
 				}
 			}
 			| M '/' P
@@ -478,7 +475,41 @@ M 			: M '*' P
 				$$.label = gentempcode();
 				string tipoAux;
 				string labelAux;
-				
+
+				if($1.tipo == $3.tipo){
+					$$.tipo = $1.tipo;
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = " + $1.label + " / " + $3.label + ";\n";
+					addTemp($$.label, $$.tipo);
+				}
+				else if($1.tipo == "int" & $3.tipo == "float"){
+					$$.tipo = $3.tipo;
+					addTemp($$.label, $$.tipo);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $1.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, $$.tipo);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + labelAux + " / " + $3.label + ";\n";
+				}
+				else if($1.tipo == "float" & $3.tipo == "int"){
+					$$.tipo = $1.tipo;
+					addTemp($$.label, $$.tipo);
+					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					$$.label + " = (float) " + $3.label + ";\n";
+
+					labelAux = $$.label;
+					$$.label = gentempcode();
+					addTemp($$.label, $$.tipo);
+					$$.traducao = $$.traducao + "\t"+
+					$$.label + " = " + $1.label + " / " + labelAux + ";\n";
+				}
+				else{
+					yyerror("\n\033[1;31mError\033[0m - \033[1;36mLinha " + std::to_string($3.linha) +  ":\033[0m\033[1;39m Operandos com tipos inválidos.");
+				}
+
 				string aux = $3.valor;
 				int cont = 0;
 				int ponto = 0;
@@ -496,41 +527,7 @@ M 			: M '*' P
 				}
 
 				if(cont == aux.size() || (cont + ponto) == aux.size()){
-					yyerror("\n\033[1;31mError\033[0m - \033[1;36mLinha " + std::to_string($3.linha) +  ":\033[0m\033[1;39m Operação inválida, divisão por 0");
-				}
-
-				if($1.tipo == $3.tipo){
-					tipoAux = $1.tipo;
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
-					$$.label + " = " + $1.label + " / " + $3.label + ";\n";
-					addTemp($$.label, tipoAux);
-				}
-				else if($1.tipo == "int" & $3.tipo == "float"){
-					tipoAux = "float";
-					addTemp($$.label, tipoAux);
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
-					$$.label + " = (float) " + $1.label + ";\n";
-
-					labelAux = $$.label;
-					$$.label = gentempcode();
-					addTemp($$.label, tipoAux);
-					$$.traducao = $$.traducao + "\t"+
-					$$.label + " = " + labelAux + " / " + $3.label + ";\n";
-				}
-				else if($1.tipo == "float" & $3.tipo == "int"){
-					tipoAux = "float";
-					addTemp($$.label, tipoAux);
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
-					$$.label + " = (float) " + $3.label + ";\n";
-
-					labelAux = $$.label;
-					$$.label = gentempcode();
-					addTemp($$.label, tipoAux);
-					$$.traducao = $$.traducao + "\t"+
-					$$.label + " = " + $1.label + " / " + labelAux + ";\n";
-				}
-				else{
-					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": Operandos com tipos inválidos.");
+					yyerror("\n\033[1;31mError\033[0m - \033[1;36mLinha " + std::to_string($3.linha) +  ":\033[0m\033[1;39m Operação inválida, divisão por 0.");
 				}
 			}
 			| M '%' P
@@ -546,7 +543,7 @@ M 			: M '*' P
 					addTemp($$.label, tipoAux);
 				}
 				else{
-					yyerror("\n\033[1;31mError\033[0m - Linha " + std::to_string($3.linha) +  ": operandos inválidos para % (Presença de float).");
+					yyerror("\n\033[1;31mError\033[0m - \033[1;36mLinha " + std::to_string($3.linha) +  ":\033[0m\033[1;39m Operandos inválidos para %, ( ou presença de float).");
 				}
 			}
 			| P
@@ -555,6 +552,11 @@ M 			: M '*' P
 			;
 
 P 			: '(' E ')'
+			{
+				$$.traducao = $2.traducao;
+				$$.tipo = $2.tipo;
+				$$.label = $2.label;
+			}
 			| TK_NUM
 			{
 				$$.tipo = "int";
@@ -688,8 +690,6 @@ void verificarOperacaoRelacional(atributos tipo_1, atributos tipo_2){
 int main(int argc, char* argv[]){
 	var_temp_qnt = 0;
 	yyparse();
-	//string a = "\033[1;31mError\033[0m\n";
-	//string b = ": só por teste mesmo\n|\n|\n|\n";
 	return 0;
 }
 

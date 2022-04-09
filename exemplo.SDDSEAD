@@ -1,19 +1,4 @@
 int main()
-{  
-   int a;
-   a = 10;
-   switch(1){
-      case 1: 20 + 30;
-              break;
-
-      case 2: 40 + 50;
-              break;
-
-      case 3: 60 + 70;
-              break;
-
-      case 4: 80 + 90;
-              break;
-   }
-   50;
+{ 
+   
 }
