@@ -8,6 +8,6 @@ all:
 commit:
 		git init
 		git add .
-		git commit -m "Ajustando ordem de precedência"
-		git branch -M 2.3
-		git push -u origin 2.3
+		git commit -m "If's, else's, while - (sintaticos)"
+		git branch -M 2.4
+		git push -u origin 2.4

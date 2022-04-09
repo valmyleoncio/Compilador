@@ -85,33 +85,77 @@ COMANDOS	: COMANDO COMANDOS
 
 			| TK_IF '(' E ')' E ';' COMANDOS
 			{
-				$$.traducao = $3.traducao + $5.traducao + $7.traducao;
+				$$.label = gentempcode();
+				addTemp($$.label, $3.tipo);
+
+				$$.traducao = $3.traducao + "\t" 
+				+ $$.label + " = !" + $3.label + ";\n" + "\t"
+				"IF(" + $$.label + ") goto FIM_IF" + "\n" + 
+				$5.traducao + "\tFIM_IF\n" + $7.traducao;
 			}
 			| TK_IF '(' E ')' E ';' TK_ELSE E ';' COMANDOS
 			{
-				$$.traducao = $3.traducao + $5.traducao + $8.traducao + $10.traducao;
+				$$.label = gentempcode();
+				addTemp($$.label, $3.tipo);
+
+				$$.traducao = $3.traducao + "\t" 
+				+ $$.label + " = !" + $3.label + ";\n" + "\t"
+				"IF(" + $$.label + ") goto ELSE" + "\n" + 
+				$5.traducao + "\tgoto FIM_IF\n" + "\tELSE\n" + $8.traducao
+				+ "\t" + "FIM_IF\n" + $10.traducao;
 			}
 			| TK_IF '(' E ')' E ';' TK_ELSE BLOCO COMANDOS
 			{
-				$$.traducao = $3.traducao + $5.traducao + $8.traducao + $9.traducao;
+				$$.label = gentempcode();
+				addTemp($$.label, $3.tipo);
+
+				$$.traducao = $3.traducao + "\t" 
+				+ $$.label + " = !" + $3.label + ";\n" + "\t"
+				"IF(" + $$.label + ") goto ELSE\n" + $5.traducao
+				+ "\tgoto FIM_IF\n" + "\tELSE\n" + $8.traducao + "\tFIM_IF\n" +
+				$9.traducao;
 			}
 			| TK_IF '(' E ')' BLOCO COMANDOS
 			{
-				$$.traducao = $3.traducao + $5.traducao;
+				$$.label = gentempcode();
+				addTemp($$.label, $3.tipo);
+
+				$$.traducao = $3.traducao + "\t" 
+				+ $$.label + " = !" + $3.label + ";\n" + "\t"
+				"IF(" + $$.label + ") goto FIM_IF" + "\n"
+				+ $5.traducao + "\tFIM_IF\n" + $6.traducao;
 			}
 			| TK_IF '(' E ')' BLOCO TK_ELSE E ';' COMANDOS
 			{
-				$$.traducao = $3.traducao + $5.traducao + $7.traducao + $9.traducao;
+				$$.label = gentempcode();
+				addTemp($$.label, $3.tipo);
+
+				$$.traducao = $3.traducao + "\t" 
+				+ $$.label + " = !" + $3.label + ";\n" + "\t"
+				"IF(" + $$.label + ") goto ELSE\n" + $5.traducao +
+				"\tgoto FIM_IF\n" + "\tELSE\n" + $7.traducao
+				+ "\t" + "FIM_IF\n" + $9.traducao ;
 			}
 			| TK_IF '(' E ')' BLOCO TK_ELSE BLOCO COMANDOS
 			{
-				$$.traducao = $3.traducao + $5.traducao + $7.traducao;
+				$$.label = gentempcode();
+				addTemp($$.label, $3.tipo);
+
+				$$.traducao = $3.traducao + "\t" 
+				+ $$.label + " = !" + $3.label + ";\n" + "\t"
+				"IF(" + $$.label + ") goto ELSE\n" + $5.traducao +
+				"\tgoto FIM_IF\n" + "\tELSE\n" + $7.traducao + "\tFIM_IF\n" + $8.traducao;
 			}
 
 
-			| TK_WHILE '(' E ')' BLOCO COMANDOS
+			| TK_WHILE '(' RELACIONAL ')' BLOCO COMANDOS
 			{
-				$$.traducao = $3.traducao + $5.traducao + $6.traducao;
+				$$.label = gentempcode();
+				addTemp($$.label, $3.tipo);
+
+				$$.traducao ="_L1" + $3.traducao + "\t" + $$.label + " = !" +
+				$3.label + ";\n" + "\tIF(" + $$.label + ") goto FIM_IF\n" +
+				$5.traducao + "\tgoto _L1\n\tFIM_IF\n" + $6.traducao;
 			}
 			| TK_DO BLOCO TK_WHILE '(' E ')' ';' COMANDOS
 			{
@@ -401,7 +445,6 @@ RELACIONAL  : E '>' E
 
 ATRIBUICAO  : TK_ID '=' E
 			{
-				cout << "\n\nCaiu aki krl\n\n";
 				verificarVariavelExistente($1.label);
 				TIPO_SIMBOLO variavel = getSimbolo($1.label);
 				if(variavel.tipoVariavel == $3.tipo){
