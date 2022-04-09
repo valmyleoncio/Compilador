@@ -79,9 +79,17 @@ COMANDOS	: COMANDO COMANDOS
 			{
 				$$.traducao = $1.traducao;
 			}
-			| TK_IF '(' E ')' E ';'
+			| TK_IF '(' E ')' E ';' COMANDOS
 			{
-				$$.traducao = $3.traducao + $5.traducao;
+				$$.traducao = $3.traducao + $5.traducao + $7.traducao;
+			}
+			| TK_IF '(' E ')' E ';' TK_ELSE E ';' COMANDOS
+			{
+				$$.traducao = $3.traducao + $5.traducao + $8.traducao + $10.traducao;
+			}
+			| TK_IF '(' E ')' E ';' TK_ELSE BLOCO
+			{
+				$$.traducao = $3.traducao + $5.traducao + $8.traducao;
 			}
 			| TK_IF '(' E ')' BLOCO
 			{
@@ -89,7 +97,7 @@ COMANDOS	: COMANDO COMANDOS
 			}
 			| TK_IF '(' E ')' BLOCO TK_ELSE BLOCO
 			{
-				$$.traducao = $3.traducao + $5.traducao;
+				$$.traducao = $3.traducao + $5.traducao + $7.traducao;
 			}
 			| 
 			{

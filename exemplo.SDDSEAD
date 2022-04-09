@@ -1,7 +1,7 @@
 int main()
 {  
-   int a;
-   a = 10;
-   
-   20;
+   if(false){
+      10 + 20;
+   } else
+      true;
 }
