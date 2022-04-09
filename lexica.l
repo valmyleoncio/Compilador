@@ -34,6 +34,14 @@ ID {LETRA}({LETRA}|{NUM})*
 
 "false"             { yylval.linha = linhas; return TK_FALSE; }
 
+"if"                { return TK_IF; }
+
+"else"              { return TK_ELSE; }
+
+"while"             { return TK_WHILE; }
+
+"for"               { return TK_FOR; }
+
 [(){}[\];,]	        { return *yytext; }
 
 [+\-*/%!&|<>""]		{ return *yytext; }

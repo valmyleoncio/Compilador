@@ -47,10 +47,11 @@ void addTemp(string label, string tipo);
 void verificarOperacaoRelacional(atributos tipo_1, atributos tipo_2);
 %}
 
-%token TK_NUM TK_REAL TK_CHAR
-%token TK_MAIN TK_ID TK_TIPO_INT TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOLEAN TK_TRUE TK_FALSE
+%token TK_NUM TK_REAL TK_CHAR TK_TRUE TK_FALSE
+%token TK_MAIN TK_ID TK_TIPO_INT TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOLEAN
 %token TK_MAIOR_IGUAL TK_MENOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MAIS_MAIS TK_MENOS_MENOS TK_OU TK_E
-%token TK_FIM TK_ERROR
+%token TK_IF TK_ELSE TK_WHILE TK_FOR
+%token TK_ERROR
 
 %start S
 
@@ -74,7 +75,23 @@ COMANDOS	: COMANDO COMANDOS
 			{
 				$$.traducao = $1.traducao + $2.traducao;
 			}
-			|
+			| BLOCO
+			{
+				$$.traducao = $1.traducao;
+			}
+			| TK_IF '(' E ')' E ';'
+			{
+				$$.traducao = $3.traducao + $5.traducao;
+			}
+			| TK_IF '(' E ')' BLOCO
+			{
+				$$.traducao = $3.traducao + $5.traducao;
+			}
+			| TK_IF '(' E ')' BLOCO TK_ELSE BLOCO
+			{
+				$$.traducao = $3.traducao + $5.traducao;
+			}
+			| 
 			{
 				$$.traducao = "";
 			}

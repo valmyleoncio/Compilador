@@ -52,14 +52,14 @@ extern int yydebug;
     TK_NUM = 258,
     TK_REAL = 259,
     TK_CHAR = 260,
-    TK_MAIN = 261,
-    TK_ID = 262,
-    TK_TIPO_INT = 263,
-    TK_TIPO_FLOAT = 264,
-    TK_TIPO_CHAR = 265,
-    TK_TIPO_BOOLEAN = 266,
-    TK_TRUE = 267,
-    TK_FALSE = 268,
+    TK_TRUE = 261,
+    TK_FALSE = 262,
+    TK_MAIN = 263,
+    TK_ID = 264,
+    TK_TIPO_INT = 265,
+    TK_TIPO_FLOAT = 266,
+    TK_TIPO_CHAR = 267,
+    TK_TIPO_BOOLEAN = 268,
     TK_MAIOR_IGUAL = 269,
     TK_MENOR_IGUAL = 270,
     TK_IGUAL_IGUAL = 271,
@@ -68,22 +68,25 @@ extern int yydebug;
     TK_MENOS_MENOS = 274,
     TK_OU = 275,
     TK_E = 276,
-    TK_FIM = 277,
-    TK_ERROR = 278
+    TK_IF = 277,
+    TK_ELSE = 278,
+    TK_WHILE = 279,
+    TK_FOR = 280,
+    TK_ERROR = 281
   };
 #endif
 /* Tokens.  */
 #define TK_NUM 258
 #define TK_REAL 259
 #define TK_CHAR 260
-#define TK_MAIN 261
-#define TK_ID 262
-#define TK_TIPO_INT 263
-#define TK_TIPO_FLOAT 264
-#define TK_TIPO_CHAR 265
-#define TK_TIPO_BOOLEAN 266
-#define TK_TRUE 267
-#define TK_FALSE 268
+#define TK_TRUE 261
+#define TK_FALSE 262
+#define TK_MAIN 263
+#define TK_ID 264
+#define TK_TIPO_INT 265
+#define TK_TIPO_FLOAT 266
+#define TK_TIPO_CHAR 267
+#define TK_TIPO_BOOLEAN 268
 #define TK_MAIOR_IGUAL 269
 #define TK_MENOR_IGUAL 270
 #define TK_IGUAL_IGUAL 271
@@ -92,8 +95,11 @@ extern int yydebug;
 #define TK_MENOS_MENOS 274
 #define TK_OU 275
 #define TK_E 276
-#define TK_FIM 277
-#define TK_ERROR 278
+#define TK_IF 277
+#define TK_ELSE 278
+#define TK_WHILE 279
+#define TK_FOR 280
+#define TK_ERROR 281
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
