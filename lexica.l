@@ -1,6 +1,7 @@
 %{
 #include <string>
 int linhas = 1;
+int bloco = 0;
 %}
 
 ESPACO [ \t]
@@ -42,7 +43,7 @@ ID {LETRA}({LETRA}|{NUM})*
 
 "for"               { return TK_FOR; }
 
-"do"                { return TK_DO; }
+"do"                { yylval.traducao = "DO"; return TK_DO; }
 
 "switch"            { return TK_SWITCH; }
 
@@ -52,7 +53,11 @@ ID {LETRA}({LETRA}|{NUM})*
 
 "continue"          { return TK_CONTINUE; }
 
-[(){}[\];,:]	    { return *yytext; }
+"{"                 {bloco++; return *yytext;}
+
+"}"                 {bloco--; return *yytext;}
+
+[()[\];,:]	        { return *yytext; }
 
 [+\-*/%!&|<>""]		{ return *yytext; }
 

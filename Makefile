@@ -8,6 +8,6 @@ all:
 commit:
 		git init
 		git add .
-		git commit -m "If's, else's, while - (sintaticos)"
-		git branch -M 2.4
-		git push -u origin 2.4
+		git commit -m "Do while, for - (sintaticos)"
+		git branch -M 2.5
+		git push -u origin 2.5

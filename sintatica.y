@@ -9,6 +9,7 @@
 using namespace std;
 
 int var_temp_qnt;
+int var_lace_qnt;
 
 string error = "";
 string warning = "";
@@ -36,12 +37,14 @@ typedef struct
 }	TIPO_TEMP;
 
 vector<TIPO_SIMBOLO> tabelaSimbolos;
+vector<vector<TIPO_SIMBOLO>> contexto;
 vector<TIPO_TEMP> tabelaTemp;
 string atribuicaoVariavel;
 
 int yylex(void);
 void yyerror(string);
 string gentempcode();
+string genLacecode();
 void verificarVariavelRepetida(string variavel);
 void verificarVariavelExistente(string nomeVariavel);
 TIPO_SIMBOLO getSimbolo(string variavel);
@@ -68,9 +71,9 @@ S 			: TK_TIPO_INT TK_MAIN '(' ')' BLOCO
 			}
 			;
 
-BLOCO		: '{' COMANDOS '}'
+BLOCO		: '{' COMANDOS '}' COMANDOS
 			{
-				$$.traducao = $2.traducao;
+				$$.traducao = $2.traducao + $4.traducao;
 			}
 			;
 
@@ -82,7 +85,6 @@ COMANDOS	: COMANDO COMANDOS
 			{
 				$$.traducao = $1.traducao;
 			}
-
 			| TK_IF '(' E ')' E ';' COMANDOS
 			{
 				$$.label = gentempcode();
@@ -146,20 +148,27 @@ COMANDOS	: COMANDO COMANDOS
 				"IF(" + $$.label + ") goto ELSE\n" + $5.traducao +
 				"\tgoto FIM_IF\n" + "\tELSE\n" + $7.traducao + "\tFIM_IF\n" + $8.traducao;
 			}
-
-
 			| TK_WHILE '(' RELACIONAL ')' BLOCO COMANDOS
 			{
 				$$.label = gentempcode();
 				addTemp($$.label, $3.tipo);
+				string lace = genLacecode();
 
-				$$.traducao ="_L1" + $3.traducao + "\t" + $$.label + " = !" +
+				$$.traducao = lace + $3.traducao + "\t" + $$.label + " = !" +
 				$3.label + ";\n" + "\tIF(" + $$.label + ") goto FIM_IF\n" +
-				$5.traducao + "\tgoto _L1\n\tFIM_IF\n" + $6.traducao;
+				$5.traducao + "\tgoto " + lace + "\n\tFIM_IF\n" + $6.traducao;
 			}
 			| TK_DO BLOCO TK_WHILE '(' E ')' ';' COMANDOS
 			{
-				$$.traducao = $2.traducao + $5.traducao + $8.traducao;
+				$$.label = gentempcode();
+				addTemp($$.label, $5.tipo);
+				string lace = genLacecode();
+				
+				$$.traducao = lace + "\t" + $1.traducao +"\n" 
+				+ $2.traducao + $5.traducao + "\t" + $$.label + " = !" 
+				+ $5.label + ";\n"
+				+ "\tIF(" + $$.label +") goto FIM_IF\n" + "\tgoto " + lace
+				+ "\n\tFIM_IF\n"+ $8.traducao;
 			}
 			| TK_FOR '(' ';' ';' ')' BLOCO COMANDOS
 			{
@@ -167,7 +176,13 @@ COMANDOS	: COMANDO COMANDOS
 			}
 			| TK_FOR '(' ATRIBUICAO ';' RELACIONAL ';' E ')' BLOCO COMANDOS
 			{
-				$$.traducao = $3.traducao + $5.traducao + $7.traducao + $9.traducao + $10.traducao;
+				$$.label = gentempcode();
+				addTemp($$.label, $5.tipo);
+				string lace = genLacecode();
+
+				$$.traducao = $3.traducao + lace + $5.traducao + "\t" + $$.label + 
+				" = !" + $5.label + ";\n\t" + "IF(" + $$.label + ") goto FIM_IF\n" + 
+				$9.traducao + $7.traducao + "\tgoto " + lace + "\n\tFIM_IF\n" + $10.traducao;
 			}
 			| TK_SWITCH '(' TK_NUM ')' '{' CASES '}' COMANDOS
 			{
@@ -668,6 +683,11 @@ int yyparse();
 string gentempcode(){
 	var_temp_qnt++;
 	return "t" + std::to_string(var_temp_qnt);	
+}
+
+string genLacecode(){
+	var_lace_qnt++;
+	return "_L" + std::to_string(var_lace_qnt);	
 }
 
 void verificarVariavelRepetida(string variavel){
