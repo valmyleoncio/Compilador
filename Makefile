@@ -8,6 +8,6 @@ all:
 commit:
 		git init
 		git add .
-		git commit -m "Do while, for - (sintaticos)"
-		git branch -M 2.5
-		git push -u origin 2.5
+		git commit -m "Iniciando Contexto"
+		git branch -M 2.6
+		git push -u origin 2.6
