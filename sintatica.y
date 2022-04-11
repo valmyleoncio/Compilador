@@ -877,6 +877,10 @@ int main(int argc, char* argv[]){
 	var_temp_qnt = 0;
 	contextoGlobal = 0;
 	yyparse();
+
+	for(int i = tabelaSimbolos.size(); i >= 0; i--){
+		
+	}
 	return 0;
 }
 
