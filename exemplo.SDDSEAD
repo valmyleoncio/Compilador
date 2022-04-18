@@ -1,16 +1,9 @@
 int main()
 {
-    
-    int a;
-    a = 20;
+    while(true)
     {
-        int a;
-        a = 30;
-        {
-            int a;
-            print(a);
-        }
-        print(a);
+        40;
+        break;
+        60;
     }
-    print(a);
 }

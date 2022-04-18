@@ -582,11 +582,8 @@ char *yytext;
 #line 2 "lexica.l"
 #include <string>
 #include <vector>
-int linhas = 1;
-int contextoAtual = 0;
-void removerSimbolos();
-#line 589 "lex.yy.c"
-#line 590 "lex.yy.c"
+#line 586 "lex.yy.c"
+#line 587 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -803,10 +800,10 @@ YY_DECL
 		}
 
 	{
-#line 22 "lexica.l"
+#line 19 "lexica.l"
 
 
-#line 810 "lex.yy.c"
+#line 807 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -866,210 +863,210 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 24 "lexica.l"
-{linhas++;}
+#line 21 "lexica.l"
+{contadorDeLinha();}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 26 "lexica.l"
+#line 23 "lexica.l"
 {}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 28 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_MAIN;}
+#line 25 "lexica.l"
+{ return TK_MAIN;}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 30 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_TIPO_INT;}
+#line 27 "lexica.l"
+{ return TK_TIPO_INT;}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 32 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_TIPO_FLOAT;}
+#line 29 "lexica.l"
+{ return TK_TIPO_FLOAT;}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 34 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_TIPO_CHAR;}
+#line 31 "lexica.l"
+{ return TK_TIPO_CHAR;}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 36 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_TIPO_STRING;}
+#line 33 "lexica.l"
+{ return TK_TIPO_STRING;}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 38 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_TIPO_BOOLEAN;}
+#line 35 "lexica.l"
+{ return TK_TIPO_BOOLEAN;}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 40 "lexica.l"
-{ yylval.linha = linhas; return TK_TRUE; }
+#line 37 "lexica.l"
+{ return TK_TRUE; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 42 "lexica.l"
-{ yylval.linha = linhas; return TK_FALSE; }
+#line 39 "lexica.l"
+{ return TK_FALSE; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 44 "lexica.l"
+#line 41 "lexica.l"
 { return TK_IF; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 46 "lexica.l"
+#line 43 "lexica.l"
 { return TK_ELSE; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 48 "lexica.l"
-{ return TK_WHILE; }
+#line 45 "lexica.l"
+{ yylval.label = genLaceNameCode(); pushLoop("while"); return TK_WHILE; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 50 "lexica.l"
-{ return TK_FOR; }
+#line 47 "lexica.l"
+{ yylval.label = genLaceNameCode(); pushLoop("for"); return TK_FOR; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 52 "lexica.l"
-{ yylval.traducao = "DO"; return TK_DO; }
+#line 49 "lexica.l"
+{ yylval.label = genLaceNameCode(); pushLoop("do"); yylval.traducao = "DO"; return TK_DO; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 54 "lexica.l"
+#line 51 "lexica.l"
 { return TK_SWITCH; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 56 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_CASE;}
+#line 53 "lexica.l"
+{ return TK_CASE;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 58 "lexica.l"
+#line 55 "lexica.l"
 { return TK_BREAK; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 60 "lexica.l"
+#line 57 "lexica.l"
 { return TK_CONTINUE; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 62 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_PRINT; }
+#line 59 "lexica.l"
+{ return TK_PRINT; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 64 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_SCAN; }
+#line 61 "lexica.l"
+{ return TK_SCAN; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 66 "lexica.l"
-{ contextoAtual++; return *yytext;}
+#line 63 "lexica.l"
+{ pushContexto(); return *yytext;}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 68 "lexica.l"
-{ contextoAtual--; return *yytext;}
+#line 65 "lexica.l"
+{ popContexto(); return *yytext;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 70 "lexica.l"
+#line 67 "lexica.l"
 { return *yytext; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 72 "lexica.l"
-{ yylval.contexto = contextoAtual; return *yytext; }
+#line 69 "lexica.l"
+{ return *yytext; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 74 "lexica.l"
-{ yylval.contexto = contextoAtual; return *yytext; }
+#line 71 "lexica.l"
+{ return *yytext; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 76 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_MAIOR_IGUAL; }
+#line 73 "lexica.l"
+{ return TK_MAIOR_IGUAL; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 78 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_MENOR_IGUAL; }
+#line 75 "lexica.l"
+{ return TK_MENOR_IGUAL; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 80 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_IGUAL_IGUAL; }
+#line 77 "lexica.l"
+{ return TK_IGUAL_IGUAL; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 82 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_DIFERENTE; }
+#line 79 "lexica.l"
+{ return TK_DIFERENTE; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 84 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_MAIS_MAIS; }
+#line 81 "lexica.l"
+{ return TK_MAIS_MAIS; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 86 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_MENOS_MENOS; }
+#line 83 "lexica.l"
+{ return TK_MENOS_MENOS; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 88 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_OU; }
+#line 85 "lexica.l"
+{ return TK_OU; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 90 "lexica.l"
-{ yylval.contexto = contextoAtual; return TK_E; }
+#line 87 "lexica.l"
+{ return TK_E; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 92 "lexica.l"
-{yylval.label = yytext; yylval.linha = linhas; yylval.contexto = contextoAtual; return TK_NUM;}
+#line 89 "lexica.l"
+{yylval.label = yytext; return TK_NUM;}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 93 "lexica.l"
-{yylval.label = yytext; yylval.linha = linhas; yylval.contexto = contextoAtual; return TK_REAL;}
+#line 90 "lexica.l"
+{yylval.label = yytext; return TK_REAL;}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 94 "lexica.l"
-{yylval.label = yytext; yylval.linha = linhas; yylval.contexto = contextoAtual; return TK_CHAR;}
+#line 91 "lexica.l"
+{yylval.label = yytext; return TK_CHAR;}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 95 "lexica.l"
-{yylval.valor = yytext; yylval.linha = linhas; yylval.contexto = contextoAtual; return TK_STRING;}
+#line 92 "lexica.l"
+{yylval.valor = yytext; return TK_STRING;}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 96 "lexica.l"
-{yylval.label = yytext; yylval.linha = linhas; yylval.contexto = contextoAtual; return TK_ID;}
+#line 93 "lexica.l"
+{yylval.label = yytext; return TK_ID;}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 98 "lexica.l"
+#line 95 "lexica.l"
 { *yytext; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 99 "lexica.l"
+#line 96 "lexica.l"
 ECHO;
 	YY_BREAK
-#line 1073 "lex.yy.c"
+#line 1070 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2074,5 +2071,5 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 99 "lexica.l"
+#line 96 "lexica.l"
 

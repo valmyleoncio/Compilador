@@ -8,6 +8,6 @@ all:
 commit:
 		git init
 		git add .
-		git commit -m "Iniciando Contexto"
-		git branch -M 2.6
-		git push -u origin 2.6
+		git commit -m "Contexto finalizado, pilha loop, início break"
+		git branch -M 2.7
+		git push -u origin 2.7

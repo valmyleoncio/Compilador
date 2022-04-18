@@ -1,9 +1,6 @@
 %{
 #include <string>
 #include <vector>
-int linhas = 1;
-int contextoAtual = 0;
-void removerSimbolos();
 %}
 
 ESPACO [ \t]
@@ -21,79 +18,79 @@ STRING \"({LETRA}|{NUM}|{SIMBOLO})*\"
 
 %%
 
-"\n"		        {linhas++;}
+"\n"		        {contadorDeLinha();}
 
 {DELIM} 	        {}
 
-"main"		        { yylval.contexto = contextoAtual; return TK_MAIN;}
+"main"		        { return TK_MAIN;}
 
-"int"		        { yylval.contexto = contextoAtual; return TK_TIPO_INT;}
+"int"		        { return TK_TIPO_INT;}
 
-"float"		        { yylval.contexto = contextoAtual; return TK_TIPO_FLOAT;}
+"float"		        { return TK_TIPO_FLOAT;}
 
-"char"		        { yylval.contexto = contextoAtual; return TK_TIPO_CHAR;}
+"char"		        { return TK_TIPO_CHAR;}
 
-"string"		    { yylval.contexto = contextoAtual; return TK_TIPO_STRING;}
+"string"		    { return TK_TIPO_STRING;}
 
-"boolean"	        { yylval.contexto = contextoAtual; return TK_TIPO_BOOLEAN;}
+"boolean"	        { return TK_TIPO_BOOLEAN;}
 
-"true"              { yylval.linha = linhas; return TK_TRUE; }
+"true"              { return TK_TRUE; }
 
-"false"             { yylval.linha = linhas; return TK_FALSE; }
+"false"             { return TK_FALSE; }
 
 "if"                { return TK_IF; }
 
 "else"              { return TK_ELSE; }
 
-"while"             { return TK_WHILE; }
+"while"             { yylval.label = genLaceNameCode(); pushLoop("while"); return TK_WHILE; }
 
-"for"               { return TK_FOR; }
+"for"               { yylval.label = genLaceNameCode(); pushLoop("for"); return TK_FOR; }
 
-"do"                { yylval.traducao = "DO"; return TK_DO; }
+"do"                { yylval.label = genLaceNameCode(); pushLoop("do"); yylval.traducao = "DO"; return TK_DO; }
 
 "switch"            { return TK_SWITCH; }
 
-"case"              { yylval.contexto = contextoAtual; return TK_CASE;}
+"case"              { return TK_CASE;}
 
 "break"             { return TK_BREAK; }
 
 "continue"          { return TK_CONTINUE; }
 
-"print"             { yylval.contexto = contextoAtual; return TK_PRINT; }
+"print"             { return TK_PRINT; }
 
-"scan"              { yylval.contexto = contextoAtual; return TK_SCAN; }
+"scan"              { return TK_SCAN; }
 
-"{"                 { contextoAtual++; return *yytext;}
+"{"                 { pushContexto(); return *yytext;}
 
-"}"                 { contextoAtual--; return *yytext;}
+"}"                 { popContexto(); return *yytext;}
 
 [()[\];,:]	        { return *yytext; }
 
-[+\-*/%!&|<>""]		{ yylval.contexto = contextoAtual; return *yytext; }
+[+\-*/%!&|<>""]		{ return *yytext; }
 
-"="		            { yylval.contexto = contextoAtual; return *yytext; }
+"="		            { return *yytext; }
 
-">="		        { yylval.contexto = contextoAtual; return TK_MAIOR_IGUAL; }
+">="		        { return TK_MAIOR_IGUAL; }
 
-"<="		        { yylval.contexto = contextoAtual; return TK_MENOR_IGUAL; }
+"<="		        { return TK_MENOR_IGUAL; }
 
-"=="		        { yylval.contexto = contextoAtual; return TK_IGUAL_IGUAL; }
+"=="		        { return TK_IGUAL_IGUAL; }
 
-"!="		        { yylval.contexto = contextoAtual; return TK_DIFERENTE; }
+"!="		        { return TK_DIFERENTE; }
 
-"++"		        { yylval.contexto = contextoAtual; return TK_MAIS_MAIS; }
+"++"		        { return TK_MAIS_MAIS; }
 
-"--"		        { yylval.contexto = contextoAtual; return TK_MENOS_MENOS; }
+"--"		        { return TK_MENOS_MENOS; }
 
-"||"		        { yylval.contexto = contextoAtual; return TK_OU; }
+"||"		        { return TK_OU; }
 
-"&&"		        { yylval.contexto = contextoAtual; return TK_E; }
+"&&"		        { return TK_E; }
 
-{NUM}		{yylval.label = yytext; yylval.linha = linhas; yylval.contexto = contextoAtual; return TK_NUM;}
-{REAL}		{yylval.label = yytext; yylval.linha = linhas; yylval.contexto = contextoAtual; return TK_REAL;}
-{CHAR}		{yylval.label = yytext; yylval.linha = linhas; yylval.contexto = contextoAtual; return TK_CHAR;}
-{STRING}	{yylval.valor = yytext; yylval.linha = linhas; yylval.contexto = contextoAtual; return TK_STRING;}
-{ID}		{yylval.label = yytext; yylval.linha = linhas; yylval.contexto = contextoAtual; return TK_ID;}
+{NUM}		{yylval.label = yytext; return TK_NUM;}
+{REAL}		{yylval.label = yytext; return TK_REAL;}
+{CHAR}		{yylval.label = yytext; return TK_CHAR;}
+{STRING}	{yylval.valor = yytext; return TK_STRING;}
+{ID}		{yylval.label = yytext; return TK_ID;}
 
 .			{ *yytext; }
 %%
