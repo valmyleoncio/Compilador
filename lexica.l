@@ -22,7 +22,9 @@ STRING \"({LETRA}|{NUM}|{SIMBOLO})*\"
 
 {DELIM} 	        {}
 
-"main"		        { return TK_MAIN;}
+"main"		        { mainStatus = 1; return TK_MAIN;}
+
+"void"		        { return TK_VOID;}
 
 "int"		        { return TK_TIPO_INT;}
 
@@ -46,19 +48,23 @@ STRING \"({LETRA}|{NUM}|{SIMBOLO})*\"
 
 "for"               { yylval.label = genLaceNameCode(); pushLoop("for"); return TK_FOR; }
 
-"do"                { yylval.label = genLaceNameCode(); pushLoop("do"); yylval.traducao = "DO"; return TK_DO; }
+"do"                { yylval.label = genLaceNameCode(); pushLoop("do");  return TK_DO; }
 
-"switch"            { return TK_SWITCH; }
+"switch"            { yylval.label = genLaceNameCode(); pushLoop("switch"); return TK_SWITCH; }
 
-"case"              { return TK_CASE;}
+"case"              { return TK_CASE; }
 
 "break"             { return TK_BREAK; }
 
 "continue"          { return TK_CONTINUE; }
 
+"return"            { return TK_RETURN; }
+
 "print"             { return TK_PRINT; }
 
 "scan"              { return TK_SCAN; }
+
+"function"          { pushFunction(); return TK_FUNCTION; }
 
 "{"                 { pushContexto(); return *yytext;}
 
@@ -85,6 +91,10 @@ STRING \"({LETRA}|{NUM}|{SIMBOLO})*\"
 "||"		        { return TK_OU; }
 
 "&&"		        { return TK_E; }
+
+"+="		        { return TK_MAIS_IGUAL; }
+
+"-="		        { return TK_MENOS_IGUAL; }
 
 {NUM}		{yylval.label = yytext; return TK_NUM;}
 {REAL}		{yylval.label = yytext; return TK_REAL;}

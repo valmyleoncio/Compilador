@@ -55,33 +55,38 @@ extern int yydebug;
     TK_TRUE = 261,
     TK_FALSE = 262,
     TK_STRING = 263,
-    TK_MAIN = 264,
-    TK_ID = 265,
-    TK_TIPO_INT = 266,
-    TK_TIPO_FLOAT = 267,
-    TK_TIPO_CHAR = 268,
-    TK_TIPO_BOOLEAN = 269,
-    TK_TIPO_STRING = 270,
-    TK_MAIOR_IGUAL = 271,
-    TK_MENOR_IGUAL = 272,
-    TK_IGUAL_IGUAL = 273,
-    TK_DIFERENTE = 274,
-    TK_MAIS_MAIS = 275,
-    TK_MENOS_MENOS = 276,
-    TK_OU = 277,
-    TK_E = 278,
-    TK_IF = 279,
-    TK_ELSE = 280,
-    TK_WHILE = 281,
-    TK_FOR = 282,
-    TK_DO = 283,
-    TK_SWITCH = 284,
-    TK_CASE = 285,
-    TK_BREAK = 286,
-    TK_CONTINUE = 287,
-    TK_PRINT = 288,
-    TK_SCAN = 289,
-    TK_ERROR = 290
+    TK_VOID = 264,
+    TK_FUNCTION = 265,
+    TK_MAIN = 266,
+    TK_ID = 267,
+    TK_TIPO_INT = 268,
+    TK_TIPO_FLOAT = 269,
+    TK_TIPO_CHAR = 270,
+    TK_TIPO_BOOLEAN = 271,
+    TK_TIPO_STRING = 272,
+    TK_MAIOR_IGUAL = 273,
+    TK_MENOR_IGUAL = 274,
+    TK_IGUAL_IGUAL = 275,
+    TK_DIFERENTE = 276,
+    TK_MAIS_MAIS = 277,
+    TK_MENOS_MENOS = 278,
+    TK_OU = 279,
+    TK_E = 280,
+    TK_MAIS_IGUAL = 281,
+    TK_MENOS_IGUAL = 282,
+    TK_IF = 283,
+    TK_ELSE = 284,
+    TK_WHILE = 285,
+    TK_FOR = 286,
+    TK_DO = 287,
+    TK_SWITCH = 288,
+    TK_CASE = 289,
+    TK_BREAK = 290,
+    TK_CONTINUE = 291,
+    TK_PRINT = 292,
+    TK_SCAN = 293,
+    TK_RETURN = 294,
+    TK_ERROR = 295
   };
 #endif
 /* Tokens.  */
@@ -91,33 +96,38 @@ extern int yydebug;
 #define TK_TRUE 261
 #define TK_FALSE 262
 #define TK_STRING 263
-#define TK_MAIN 264
-#define TK_ID 265
-#define TK_TIPO_INT 266
-#define TK_TIPO_FLOAT 267
-#define TK_TIPO_CHAR 268
-#define TK_TIPO_BOOLEAN 269
-#define TK_TIPO_STRING 270
-#define TK_MAIOR_IGUAL 271
-#define TK_MENOR_IGUAL 272
-#define TK_IGUAL_IGUAL 273
-#define TK_DIFERENTE 274
-#define TK_MAIS_MAIS 275
-#define TK_MENOS_MENOS 276
-#define TK_OU 277
-#define TK_E 278
-#define TK_IF 279
-#define TK_ELSE 280
-#define TK_WHILE 281
-#define TK_FOR 282
-#define TK_DO 283
-#define TK_SWITCH 284
-#define TK_CASE 285
-#define TK_BREAK 286
-#define TK_CONTINUE 287
-#define TK_PRINT 288
-#define TK_SCAN 289
-#define TK_ERROR 290
+#define TK_VOID 264
+#define TK_FUNCTION 265
+#define TK_MAIN 266
+#define TK_ID 267
+#define TK_TIPO_INT 268
+#define TK_TIPO_FLOAT 269
+#define TK_TIPO_CHAR 270
+#define TK_TIPO_BOOLEAN 271
+#define TK_TIPO_STRING 272
+#define TK_MAIOR_IGUAL 273
+#define TK_MENOR_IGUAL 274
+#define TK_IGUAL_IGUAL 275
+#define TK_DIFERENTE 276
+#define TK_MAIS_MAIS 277
+#define TK_MENOS_MENOS 278
+#define TK_OU 279
+#define TK_E 280
+#define TK_MAIS_IGUAL 281
+#define TK_MENOS_IGUAL 282
+#define TK_IF 283
+#define TK_ELSE 284
+#define TK_WHILE 285
+#define TK_FOR 286
+#define TK_DO 287
+#define TK_SWITCH 288
+#define TK_CASE 289
+#define TK_BREAK 290
+#define TK_CONTINUE 291
+#define TK_PRINT 292
+#define TK_SCAN 293
+#define TK_RETURN 294
+#define TK_ERROR 295
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

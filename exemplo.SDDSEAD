@@ -1,9 +1,3 @@
-int main()
-{
-    while(true)
-    {
-        40;
-        break;
-        60;
-    }
+int main(){
+    
 }

@@ -3,21 +3,26 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <array>
+#include <iterator>
+#include <algorithm>
 
 #define YYSTYPE atributos
-#define SIZESTRING 256
 
 using namespace std;
 
+int mainStatus = 0;
 int var_temp_qnt;
 int var_lace_qnt;
 int var_cond_qnt;
 int var_linha_qnt = 1;
 int var_lace_name_qnt = 0;
+int controleLoop = 0;
+int controleFunction = 0;
 
 string error = "";
 string warning = "";
-string contLinha = "";
+string contLinha = "1";
 
 struct atributos
 {
@@ -25,6 +30,7 @@ struct atributos
 	string traducao;
 	string tipo;
 	string valor;
+	string index;
 };
 
 typedef struct
@@ -32,6 +38,7 @@ typedef struct
 	string nomeVariavel;
 	string tipoVariavel; 
 	string labelVariavel;
+	string valorVariavel;
 }	TIPO_SIMBOLO;
 
 typedef struct
@@ -46,17 +53,34 @@ typedef struct
 	string nomeLaco;
 	string tipoLaco;
 	string fimLaco;
-	string contexto;
+	string inicioLaco;
+	int contexto;
 }	TIPO_LOOP;
 
+typedef struct
+{
+	string nomeFunction;
+	string tipoReturn;
+	string inicioFunction;
+	string fimFunction;
+	vector<TIPO_SIMBOLO> parameters;
+	string retornoTipo = "";
+	string retornoLabel = "";
+}	TIPO_FUNCTION;
+
 vector<TIPO_LOOP> tabelaLoop;
+vector<TIPO_FUNCTION> tabelaFunction;
+vector<TIPO_SIMBOLO> parametersChamada;
 vector<vector<TIPO_SIMBOLO>> mapa;
 int contextoGlobal;
 vector<TIPO_TEMP> tabelaTemp;
 string atribuicaoVariavel;
+string atribuicaoVariavelGlobais;
+string traducaoFunction;
 
 int yylex(void);
 void yyerror(string);
+int getContexto();
 string gentempcode();
 string genLacecode();
 string genCondcode();
@@ -65,7 +89,7 @@ void verificarVariavelRepetida(string variavel);
 TIPO_SIMBOLO getSimbolo(string variavel);
 void addSimbolo(string variavel, string tipo, string label);
 void addString(string variavel, string tipo, string label);
-void addTempString(string label, string tipo);
+int addTempString(string label, string tipo);
 int getSize(string str);
 void addTemp(string label, string tipo);
 void verificarOperacaoRelacional(atributos tipo_1, atributos tipo_2);
@@ -74,14 +98,17 @@ void contadorDeLinha();
 void pushContexto();
 void popContexto();
 void pushLoop(string tipo);
+void pushFunction();
+TIPO_FUNCTION getFunction();
 TIPO_LOOP getLace(string nome);
 TIPO_LOOP getLaceBreak();
+TIPO_FUNCTION getFunctionChamada(string nome);
 %}
 
-%token TK_NUM TK_REAL TK_CHAR TK_TRUE TK_FALSE TK_STRING
+%token TK_NUM TK_REAL TK_CHAR TK_TRUE TK_FALSE TK_STRING TK_VOID TK_FUNCTION
 %token TK_MAIN TK_ID TK_TIPO_INT TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOLEAN TK_TIPO_STRING
-%token TK_MAIOR_IGUAL TK_MENOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MAIS_MAIS TK_MENOS_MENOS TK_OU TK_E
-%token TK_IF TK_ELSE TK_WHILE TK_FOR TK_DO TK_SWITCH TK_CASE TK_BREAK TK_CONTINUE TK_PRINT TK_SCAN
+%token TK_MAIOR_IGUAL TK_MENOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MAIS_MAIS TK_MENOS_MENOS TK_OU TK_E TK_MAIS_IGUAL TK_MENOS_IGUAL
+%token TK_IF TK_ELSE TK_WHILE TK_FOR TK_DO TK_SWITCH TK_CASE TK_BREAK TK_CONTINUE TK_PRINT TK_SCAN TK_RETURN
 %token TK_ERROR 
 
 %start S
@@ -93,13 +120,65 @@ TIPO_LOOP getLaceBreak();
 S 			: TK_TIPO_INT TK_MAIN '(' ')' BLOCO
 			{
 				if(error == "")
-					cout << "\n/*Compilador SDDSEAD*/\n\n" + warning + "\n"<< "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nint main(void)\n{\n" << atribuicaoVariavel + "\n" + $5.traducao << "\treturn 0;\n}" << endl;
+					cout << "\n/*Compilador SDDSEAD*/\n\n" + warning + "\n"<< "#include <iostream>\n#include<string.h>\n#include<stdio.h>\n\n" + atribuicaoVariavelGlobais + "\n" + traducaoFunction  + "\nint main(void)\n{\n" <<  atribuicaoVariavel + "\n" + $5.traducao << "\treturn 0;\n}" << endl;
 				else{
 					cout << "\n" + warning + "\n";
 					yyerror(error);
 				} 
 			}
+			| DECLARACAO ';' S
+			{
+			}
+			| ATRIBUICAO ';' S
+			{
+				traducaoFunction += $1.traducao;
+			}
+			| FUNSSAO S
+			{
+			}
 			;
+
+FUNSSAO     : DECLAFUNC '(' PARAMETERS ')' BLOCO
+			{
+				TIPO_FUNCTION function = getFunction();
+
+				int size = tabelaFunction.size() - 1;
+				tabelaFunction[size].nomeFunction = $1.label;
+
+				if((function.retornoLabel == "") && ($1.tipo != "void"))
+					error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Função não apresenta um retorno.\n";
+				else if((function.retornoLabel != "") && ($1.tipo == "void"))
+					error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Função void não poder conter um retorno.\n";
+				else if($1.tipo != function.retornoTipo && ($1.tipo != "void"))
+					error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Tipo de return não condiz com o tipo da função.\n";
+
+				traducaoFunction += $5.traducao + "\tEndFunc" + ";\n\n";
+			}
+			;
+
+DECLAFUNC  : TK_FUNCTION TIPOS TK_ID
+		   {
+			   traducaoFunction += "    _" + $3.label + ":\n";
+			   $$.label = $3.label;
+			   $$.tipo = $2.tipo;
+		   }
+		   ;
+
+PARAMETERS : PARAMETER
+		   {
+		   }
+		   |
+		   {
+		   }
+		   ;
+
+PARAMETER   : DECLARACAO
+		    {
+		    }
+		    | DECLARACAO ',' PARAMETER
+		    {
+		    }
+		    ;
 
 BLOCO		: '{' COMANDOS '}'
 			{
@@ -118,7 +197,13 @@ COMANDOS	: COMANDO COMANDOS
 			| TK_IF '(' E ')' E ';' COMANDOS
 			{
 				$$.label = gentempcode();
-				addTemp($$.label, $3.tipo);
+
+				if(controleFunction > 0){
+					traducaoFunction = traducaoFunction + "\t" + "int" + " " + $$.label +";\n";
+				} else {
+					atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
+				}
+
 				string cond = genCondcode();
 
 				$$.traducao = $3.traducao + "\t" 
@@ -129,7 +214,11 @@ COMANDOS	: COMANDO COMANDOS
 			| TK_IF '(' E ')' E ';' TK_ELSE E ';' COMANDOS
 			{
 				$$.label = gentempcode();
-				addTemp($$.label, $3.tipo);
+				if(controleFunction > 0){
+					traducaoFunction = traducaoFunction + "\t" + "int" + " " + $$.label +";\n";
+				} else {
+					atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
+				}
 				string cond = genCondcode();
 
 				$$.traducao = $3.traducao + "\t" 
@@ -141,7 +230,11 @@ COMANDOS	: COMANDO COMANDOS
 			| TK_IF '(' E ')' E ';' TK_ELSE BLOCO COMANDOS
 			{
 				$$.label = gentempcode();
-				addTemp($$.label, $3.tipo);
+				if(controleFunction > 0){
+					traducaoFunction = traducaoFunction + "\t" + "int" + " " + $$.label +";\n";
+				} else {
+					atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
+				}
 				string cond = genCondcode();
 
 				$$.traducao = $3.traducao + "\t" 
@@ -153,7 +246,13 @@ COMANDOS	: COMANDO COMANDOS
 			| TK_IF '(' E ')' BLOCO COMANDOS
 			{
 				$$.label = gentempcode();
-				addTemp($$.label, $3.tipo);
+
+				if(!mainStatus){
+					traducaoFunction = traducaoFunction + "\t" + "int" + " " + $$.label +";\n";
+				} else {
+					atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
+				}
+
 				string cond = genCondcode();
 
 				$$.traducao = $3.traducao + "\t" 
@@ -164,7 +263,7 @@ COMANDOS	: COMANDO COMANDOS
 			| TK_IF '(' E ')' BLOCO TK_ELSE E ';' COMANDOS
 			{
 				$$.label = gentempcode();
-				addTemp($$.label, $3.tipo);
+				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
 				string cond = genCondcode();
 
 				$$.traducao = $3.traducao + "\t" 
@@ -176,7 +275,7 @@ COMANDOS	: COMANDO COMANDOS
 			| TK_IF '(' E ')' BLOCO TK_ELSE BLOCO COMANDOS
 			{
 				$$.label = gentempcode();
-				addTemp($$.label, $3.tipo);
+				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
 				string cond = genCondcode();
 
 				$$.traducao = $3.traducao + "\t" 
@@ -187,35 +286,35 @@ COMANDOS	: COMANDO COMANDOS
 			| TK_WHILE '(' P ')' BLOCO COMANDOS
 			{
 				$$.label = gentempcode();
-				addTemp($$.label, $3.tipo);
-				string lace = genLacecode();
+				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
 				TIPO_LOOP loop = getLace($1.label);
 
-				$$.traducao = lace + $3.traducao + "\t" + $$.label + " = !" +
+				$$.traducao = loop.inicioLaco + $3.traducao + "\t" + $$.label + " = !" +
 				$3.label + ";\n" + "\tIF(" + $$.label + ") goto " + loop.fimLaco + "\n" +
-				$5.traducao + "\tgoto " + lace + "\n\t" + loop.fimLaco + "\n" + $6.traducao;
+				$5.traducao + "\tgoto " + loop.inicioLaco + "\n\t" + loop.fimLaco + "\n" + $6.traducao;
 			}
 			| TK_DO BLOCO TK_WHILE '(' E ')' ';' COMANDOS
 			{
 				$$.label = gentempcode();
-				addTemp($$.label, $5.tipo);
-				string lace = genLacecode();
-				string cond = genCondcode();
+				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
+				TIPO_LOOP loop = getLace($1.label);
 
-				$$.traducao = lace + "\t" + $1.traducao +"\n" 
-				+ $2.traducao + $5.traducao + "\t" + $$.label + " = !" 
-				+ $5.label + ";\n"
-				+ "\tIF(" + $$.label +") goto " + cond + "\n" + "\tgoto " + lace
-				+ "\n\t" + cond +" \n"+ $8.traducao;
+				$$.traducao = loop.inicioLaco + $2.traducao + $5.traducao + "\t" 
+				+ $$.label + " = !" + $5.label + ";\n" + "\tIF(" + $$.label +") goto " 
+				+ loop.fimLaco  + "\n" + "\tgoto " + loop.inicioLaco + "\n\t" + loop.fimLaco +" \n"+ $8.traducao;
 			}
 			| TK_FOR '(' ';' ';' ')' BLOCO COMANDOS
 			{
-				$$.traducao = $6.traducao + $7.traducao;
+				$$.label = gentempcode();
+				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
+				TIPO_LOOP loop = getLace($1.label); 
+
+				$$.traducao = loop.inicioLaco + $6.traducao + "\t" + "goto " + loop.inicioLaco + "\n\t" + loop.fimLaco +"\n" + $7.traducao;
 			}
 			| TK_FOR '(' ATRIBUICAO ';' RELACIONAL ';' E ')' BLOCO COMANDOS
 			{
 				$$.label = gentempcode();
-				addTemp($$.label, $5.tipo);
+				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
 				string lace = genLacecode();
 				string cond = genCondcode();
 
@@ -223,7 +322,7 @@ COMANDOS	: COMANDO COMANDOS
 				" = !" + $5.label + ";\n\t" + "if(" + $$.label + ") goto "+ cond + "\n" + 
 				$9.traducao + $7.traducao + "\tgoto " + lace + "\n\t"+ cond +"\n" + $10.traducao;
 			}
-			| TK_SWITCH '(' TK_NUM ')' '{' CASES '}' COMANDOS
+			| TK_SWITCH '(' P ')' '{' CASES '}' COMANDOS
 			{
 				$$.traducao = $3.traducao + $6.traducao + $8.traducao;
 			}
@@ -243,58 +342,164 @@ CASES       : CASE CASES
 			}
 			;
 
-CASE        : TK_CASE TK_NUM ':' COMANDOS TK_BREAK ';'
+CASE        : TK_CASE TK_NUM ':' COMANDOS
 			{
-				$$.traducao = $2.traducao + $4.traducao;
 			}
 			;
 
 COMANDO 	: E ';'
-			| DECLARACAO
+			{
+			}
+			| DECLARACAO ';'
 			{
 			}
 			| TK_BREAK ';'
 			{
-				TIPO_LOOP loop = getLaceBreak();
-				$$.traducao = "\tgoto " + loop.fimLaco + "\n";
+				if(controleLoop == 0)
+				{
+					error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Break não existente em um loop, ignorado.\n";
+				} else {
+					TIPO_LOOP loop = getLaceBreak();
+					$$.traducao = "\tgoto " + loop.fimLaco + "\n";
+				}
+			}
+			| TK_CONTINUE ';'
+			{
+				if(controleLoop == 0){
+					error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Continue não existente em um loop, ignorado.\n";
+				} else {
+					TIPO_LOOP loop = getLaceBreak();
+					$$.traducao = "\tgoto " + loop.inicioLaco + "\n";
+				}
+			}
+			| TK_RETURN E ';'
+			{
+				if(controleFunction == 0){
+					error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Return não está dentro de uma função.\n";
+				}
+				
+				int size = tabelaFunction.size() - 1;
+				tabelaFunction[size].retornoLabel = $2.label;
+				tabelaFunction[size].retornoTipo = $2.tipo;
+				$$.traducao += $2.traducao + "\tReturn " + $2.label + ";\n";
 			}
 			;
 
-DECLARACAO  : TK_TIPO_INT TK_ID ';'
+DECLARACAO  : TIPOS TK_ID
 			{
-				verificarVariavelRepetida($2.label);
-				addSimbolo($2.label, "int", gentempcode());
-				$$.traducao = "";
-				$$.label = "";
+				if($1.tipo == "void")
+					error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Void não é um tipo declarável.\n";
+
+				if($1.tipo != "string"){
+					int indiceTopo = tabelaFunction.size() - 1;
+					if(controleFunction > 0 && getContexto() == 0){
+
+						TIPO_SIMBOLO simb;
+						simb.nomeVariavel = $2.label;
+						simb.tipoVariavel = $1.tipo;
+						simb.labelVariavel = gentempcode();
+
+						if(tabelaFunction[indiceTopo].parameters.size() == 0)
+						{
+							tabelaFunction[indiceTopo].parameters.push_back(simb);
+
+						} else {
+							for (int i = indiceTopo; i >= 0; i--)
+							{ 
+								if(tabelaFunction[indiceTopo].parameters[i].nomeVariavel == $2.label)
+								{
+									error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Nome do parâmetro '" + $2.label + "' ja utilizado na função.\n";
+								}	
+							}
+							tabelaFunction[indiceTopo].parameters.push_back(simb);
+						}
+						traducaoFunction = traducaoFunction + "\t" + simb.tipoVariavel + " " + simb.labelVariavel +";\n";
+						
+					} else {
+						int indiceTopoParameters = tabelaFunction[indiceTopo].parameters.size();
+						if(controleFunction > 0 && getContexto() > 0){
+							for (int i = indiceTopoParameters; i >= 0; i--)
+							{ 
+								if(tabelaFunction[indiceTopo].parameters[i].nomeVariavel == $2.label)
+								{
+									error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Váriavel '" + $2.label + "' não poderá ser de declarada nesta função.\n";
+								}	
+							}
+						}
+
+						verificarVariavelRepetida($2.label);
+						addSimbolo($2.label, $1.tipo, gentempcode());
+						$$.traducao = "";
+						$$.label = "";
+					}
+				} else {
+					int indiceTopo = tabelaFunction.size() - 1;
+					if(controleFunction > 0 && getContexto() == 0){
+						TIPO_SIMBOLO simb;
+						simb.nomeVariavel = $2.label;
+						simb.tipoVariavel = $1.tipo;
+						simb.labelVariavel = gentempcode();
+
+						if(tabelaFunction[indiceTopo].parameters.size() == 0)
+						{
+							tabelaFunction[indiceTopo].parameters.push_back(simb);
+						} else {
+							for (int i = indiceTopo; i >= 0; i--)
+							{ 
+								if(tabelaFunction[indiceTopo].parameters[i].nomeVariavel == $2.label)
+								{
+									error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Nome do parâmetro '" + $2.label + "' ja utilizado na função.\n";
+								}	
+							}
+							tabelaFunction[indiceTopo].parameters.push_back(simb);
+						}
+						traducaoFunction = traducaoFunction + "\t" + "char" + " *" + simb.labelVariavel + ";\n";
+					} else {
+						int indiceTopoParameters = tabelaFunction[indiceTopo].parameters.size();
+						if(controleFunction > 0 && getContexto() > 0){
+							for (int i = indiceTopoParameters; i >= 0; i--)
+							{ 
+								if(tabelaFunction[indiceTopo].parameters[i].nomeVariavel == $2.label)
+								{
+									error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Váriavel '" + $2.label + "' não poderá ser de declarada nesta função.\n";
+								}	
+							}
+						}
+
+						string label = gentempcode();
+						verificarVariavelRepetida($2.label);
+						addString($2.label, "string", label);
+						$$.traducao = "";
+						$$.tipo = "string";
+						$$.label = "\tstrcpy(" + label + ", " + "\0" + ");\n";
+					}
+				}
+			}
+			;
+
+TIPOS       : TK_TIPO_INT
+			{
+				$$.tipo = "int";
 			}			
-			| TK_TIPO_FLOAT TK_ID ';'
+			| TK_TIPO_FLOAT
 			{
-				verificarVariavelRepetida($2.label);
-				addSimbolo($2.label, "float", gentempcode());
-				$$.traducao = "";
-				$$.label = "";
+				$$.tipo = "float";
 			}
-			| TK_TIPO_CHAR TK_ID ';'
+			| TK_TIPO_CHAR
 			{
-				verificarVariavelRepetida($2.label);
-				addSimbolo($2.label, "char", gentempcode());
-				$$.traducao = "";
-				$$.label = "";
+				$$.tipo = "char";
 			}
-			| TK_TIPO_STRING TK_ID ';'
+			| TK_TIPO_STRING
 			{
-				verificarVariavelRepetida($2.label);
-				string label = gentempcode();
-				addString($2.label, "string", label);
-				$$.traducao = "";
-				$$.label = "\tstrcpy(" + label + ", " + "\0" + ");\n";
+				$$.tipo = "string";
 			}
-			| TK_TIPO_BOOLEAN TK_ID ';'
+			| TK_TIPO_BOOLEAN
 			{
-				verificarVariavelRepetida($2.label);
-				addSimbolo($2.label, "boolean", gentempcode());
-				$$.traducao = "";
-				$$.label = "";
+				$$.tipo = "boolean";
+			}
+			| TK_VOID
+			{
+				$$.tipo = "void";
 			}
 			;
 
@@ -436,11 +641,79 @@ E 			: M '+' E
 			| ATRIBUICAO
 			{
 			}
+			| TK_ID '(' CHAMADAS ')'
+			{
+				TIPO_FUNCTION aux = getFunctionChamada($1.label);
+				int index;
+				int j = parametersChamada.size() - 1;
+				string params;
+
+				for(int k = tabelaFunction.size() - 1; k >= 0; k--)
+				{
+					if(tabelaFunction[k].nomeFunction == $1.label){
+						index = k;
+						break;
+					}
+				}
+
+				if(aux.parameters.size() != parametersChamada.size())
+					error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Quantidade de parâmetros inválida.\n";
+				else{
+					for(int i = 0; i < aux.parameters.size(); i++)
+					{
+						if(aux.parameters[i].tipoVariavel != parametersChamada[j].tipoVariavel)
+						{
+							error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m O parâmetro da função '" + aux.parameters[i].nomeVariavel + "' recebe tipo diferente.\n";
+						} else {
+							tabelaFunction[index].parameters[i].valorVariavel = parametersChamada[j].labelVariavel;
+							params += "\tparam " + parametersChamada[j].labelVariavel + ";\n";
+						}
+						j--;
+					}
+				}
+				
+				$$.traducao += $3.traducao + params;
+				$$.tipo = aux.retornoTipo; 
+			    $$.label = "call " + aux.nomeFunction + ", " + std::to_string(parametersChamada.size());
+
+				while( parametersChamada.size() != 0){
+					parametersChamada.pop_back();
+				}
+			}
 			| M
 			{
 				$$.traducao = $1.traducao;
 			}
 			;
+
+CHAMADAS   : CHAMADA
+		   {
+			   $$.traducao = $1.traducao;
+		   }
+		   |
+		   {
+		   }
+		   ;
+
+CHAMADA    : E
+		   {
+			   TIPO_SIMBOLO aux;
+			   aux.tipoVariavel = $1.tipo;
+			   aux.labelVariavel = $1.label;
+			   parametersChamada.push_back(aux);
+
+			   $$.traducao = $1.traducao;
+		   }
+		   | E ',' CHAMADA
+		   {
+			   TIPO_SIMBOLO aux;
+			   aux.tipoVariavel = $1.tipo;
+			   aux.labelVariavel = $1.label;
+			   parametersChamada.push_back(aux);
+
+			   $$.traducao = $1.traducao + $3.traducao; 
+		   }
+		   ;
 
 RELACIONAL  : E '>' E
 			{
@@ -518,31 +791,54 @@ ATRIBUICAO  : TK_ID '=' E
 			{
 				TIPO_SIMBOLO variavel = getSimbolo($1.label);
 
+				string traduzir;
 				if(variavel.tipoVariavel == $3.tipo){
 					if($3.tipo == "string"){
-						$$.traducao = $1.traducao + $3.traducao 
-						+ "\tstrcpy(" + $3.label +", " + $3.valor +");\n"
-						+ "\tstrcpy(" + variavel.labelVariavel +", " + $3.label +");\n";
+
+						traduzir = $1.traducao
+						+ "\tstrcpy(" + $3.label +", " + $3.valor +");\n\t" + 
+						variavel.labelVariavel + " = " + "(char*) malloc(" + $3.index +");" +
+						"\n\tstrcpy(" + variavel.labelVariavel +", " + $3.label +");\n";
+
+						if(getContexto() != 0)
+							$$.traducao = traduzir;
+						else
+							traducaoFunction += traduzir + '\n';
+							
 					} else {
-						$$.traducao = $1.traducao + $3.traducao + "\t" + 
+						traduzir = $1.traducao + $3.traducao + "\t" + 
 				    	variavel.labelVariavel + " = " + $3.label + ";\n";
+						if(getContexto() != 0)
+							$$.traducao = traduzir;
+						else
+							traducaoFunction += traduzir + '\n';
 					}
 				}
 				else if (variavel.tipoVariavel == "int" & $3.tipo == "float")
 				{
 					$$.label = gentempcode();
 					addTemp($$.label, "int");
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					traduzir = $1.traducao + $3.traducao + "\t" + 
 					$$.label + " = (int) " + $3.label + ";\n" + "\t" + 
 					variavel.labelVariavel + " = " + $$.label + ";\n";
+
+					if(getContexto() != 0)
+							$$.traducao = traduzir;
+						else
+							traducaoFunction += traduzir + '\n';
 				}
 				else if (variavel.tipoVariavel == "float" & $3.tipo == "int")
 				{
 					$$.label = gentempcode();
 					addTemp($$.label, "float");
-					$$.traducao = $1.traducao + $3.traducao + "\t" + 
+					traduzir = $1.traducao + $3.traducao + "\t" + 
 					$$.label + " = (float) " + $3.label + ";\n" + "\t" + 
 					variavel.labelVariavel + " = " + $$.label + ";\n";
+
+					if(getContexto() != 0)
+							$$.traducao = traduzir;
+						else
+							traducaoFunction += traduzir + '\n';
 				}
 				else{
 					error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Atribuição inválida, tipos diferentes.\n";
@@ -705,7 +1001,8 @@ P 			: '(' E ')'
 			{
 				$$.tipo = "string";
 				$$.label = gentempcode();
-				addTempString($$.label, $$.valor);
+				$$.traducao = "\tstrcpy(" + $$.label +", " + $1.valor + ");\n";
+				$$.index = std::to_string(addTempString($$.label, $$.valor));
 			}
 			| TK_TRUE
 			{
@@ -723,9 +1020,7 @@ P 			: '(' E ')'
 			}
 			| TK_ID
 			{
-				bool encontrei = false;
 				TIPO_SIMBOLO variavel = getSimbolo($1.label);
-
 				$$.tipo = variavel.tipoVariavel;
 				$$.label = variavel.labelVariavel;
 				$$.traducao = "";
@@ -746,6 +1041,9 @@ P 			: '(' E ')'
 #include "lex.yy.c"
 
 int yyparse();
+int getContexto(){
+	return mapa.size() - 1;
+}
 
 string gentempcode(){
 	var_temp_qnt++;
@@ -797,8 +1095,26 @@ TIPO_SIMBOLO getSimbolo(string variavel){
 				return tabelaSimbolos[i];
 			}				
 		}
+		
 		contexto -= 1;
-		tabelaSimbolos = mapa[contexto];
+		if(contexto >= 0){
+			tabelaSimbolos = mapa[contexto];
+		}
+	}
+
+	if(controleFunction > 0){
+
+		int sizeFunctions = tabelaFunction.size() - 1;
+		int sizeFunctionsParameters = tabelaFunction[sizeFunctions].parameters.size();
+
+		for (int i = sizeFunctionsParameters; i >= 0; i--)
+		{
+			if(tabelaFunction[sizeFunctions].parameters[i].nomeVariavel == variavel)
+			{
+				return tabelaFunction[sizeFunctions].parameters[i];
+			}				
+		}
+		
 	}
 
 	error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m A variável '" + variavel + "' não foi instanciada.\n";
@@ -819,7 +1135,19 @@ void addSimbolo(string variavel, string tipo, string label){
 		valor.tipoVariavel = "int";
 	}
 
-	atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
+
+	if(controleFunction > 0)
+	{
+		traducaoFunction = traducaoFunction + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
+
+	}else if(contexto == 0 && controleFunction == 0)
+	{
+		atribuicaoVariavelGlobais = atribuicaoVariavelGlobais  + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
+
+	} else 
+	{
+		atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
+	}
 }
 
 void addString(string variavel, string tipo, string label){
@@ -833,8 +1161,16 @@ void addString(string variavel, string tipo, string label){
 	mapa[contexto].push_back(valor);
 
 	valor.tipoVariavel = "char";
-	atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " 
-	+ valor.labelVariavel + "[" + std::to_string(SIZESTRING) + "]" +";\n";
+	if(controleFunction > 0){
+		traducaoFunction = traducaoFunction + "\t" + valor.tipoVariavel + " *" 
+		+ valor.labelVariavel + ";\n";
+	} else if(contexto == 0 && controleFunction == 0){
+		atribuicaoVariavelGlobais = atribuicaoVariavelGlobais + "\t" + valor.tipoVariavel + " *" 
+		+ valor.labelVariavel + ";\n";
+	} else {
+		atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " *" 
+		+ valor.labelVariavel + ";\n";
+	}
 }
 
 void addTemp(string label, string tipo){
@@ -847,10 +1183,17 @@ void addTemp(string label, string tipo){
 		valor.tipoVariavel = "int";
 	}
 
-	atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
+	int contexto = getContexto();
+
+	if(controleFunction > 0)
+		traducaoFunction = traducaoFunction + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
+	else if(contexto == 0 && controleFunction == 0)
+		atribuicaoVariavelGlobais = atribuicaoVariavelGlobais + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
+	else
+		atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " + valor.labelVariavel +";\n";
 }
 
-void addTempString(string label, string conteudo){
+int addTempString(string label, string conteudo){
 	TIPO_TEMP valor;
 	valor.labelVariavel = label;
 	valor.tipoVariavel = "string";
@@ -859,9 +1202,19 @@ void addTempString(string label, string conteudo){
 	valor.tipoVariavel = "char";
 
 	int size = getSize(conteudo) - 1;
+	int contexto = mapa.size() - 1;
 
-	atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " + 
-	valor.labelVariavel + "[" + std::to_string(size) + "]" + ";\n";
+	if(controleFunction > 0){
+		traducaoFunction = traducaoFunction + "\t" + valor.tipoVariavel + " " + 
+		valor.labelVariavel + "[" + std::to_string(size) + "]" + ";\n";
+	} else if(contexto == 0 && controleFunction == 0){
+		atribuicaoVariavelGlobais = atribuicaoVariavelGlobais + "\t" + valor.tipoVariavel + " " + 
+		valor.labelVariavel + "[" + std::to_string(size) + "]" + ";\n";
+	} else {
+		atribuicaoVariavel = atribuicaoVariavel + "\t" + valor.tipoVariavel + " " + 
+		valor.labelVariavel + "[" + std::to_string(size) + "]" + ";\n";
+	}
+	return size;
 }
 
 int getSize(string str){
@@ -895,23 +1248,46 @@ void pushContexto(){
 
 void popContexto(){
 	mapa.pop_back();
+
+	if(controleLoop != 0)
+		controleLoop--;
+
+	if(controleFunction != 0)
+		controleFunction--;
 }
 
 void pushLoop(string tipo){
 
+	controleLoop++;
+	int size = tabelaLoop.size();
 	TIPO_LOOP aux;
 	aux.nomeLaco = "loop_" + std::to_string(var_lace_name_qnt);
 	aux.tipoLaco = tipo;
-	aux.fimLaco = genCondcode();
-	aux.contexto = mapa.size();
-	tabelaLoop.push_back(aux);
+
+	if(tipo == "while" && size != 0)
+	{
+		if(!(tabelaLoop[size - 1].tipoLaco == "do"))
+		{
+			aux.fimLaco = genCondcode();
+			aux.inicioLaco = genLacecode();
+			aux.contexto = getContexto();
+			tabelaLoop.push_back(aux);
+		}
+
+	} else {
+		aux.fimLaco = genCondcode();
+		aux.inicioLaco = genLacecode();
+		aux.contexto = mapa.size();
+		tabelaLoop.push_back(aux);
+	}
 }
 
 TIPO_LOOP getLace(string nome){
 
 	for (int i = tabelaLoop.size() - 1; i >= 0; i--)
 	{ 
-		if(tabelaLoop[i].nomeLaco == nome){
+		if(tabelaLoop[i].nomeLaco == nome)
+		{
 			return tabelaLoop[i];
 		}
 	}
@@ -922,6 +1298,35 @@ TIPO_LOOP getLaceBreak(){
 	return tabelaLoop[size - 1];
 }
 
+void pushFunction(){
+	TIPO_FUNCTION aux;
+	aux.inicioFunction = genLacecode();
+	aux.fimFunction = genLacecode();
+	tabelaFunction.push_back(aux);
+	controleFunction++;
+}
+
+TIPO_FUNCTION getFunction(){
+	int size = tabelaFunction.size() - 1;
+	return tabelaFunction[size];
+}
+
+TIPO_FUNCTION getFunctionChamada(string nome){
+
+	TIPO_FUNCTION aux;
+	int achou = 0;
+
+	for(int i = 0; i < tabelaFunction.size(); i++){
+		if(tabelaFunction[i].nomeFunction == nome){
+			aux = tabelaFunction[i];
+			achou = 1;
+		}
+	}
+
+	if(achou == 0)
+		error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Nome da função não existe.\n";
+	return aux;
+}
 
 void contadorDeLinha(){
 	var_linha_qnt++;
