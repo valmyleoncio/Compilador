@@ -8,6 +8,6 @@ all:
 commit:
 		git init
 		git add .
-		git commit -m "Entrega_Final"
-		git branch -M 2.8
-		git push -u origin 2.8
+		git commit -m "final commit"
+		git branch -M main
+		git push -u origin main

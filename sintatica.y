@@ -103,6 +103,7 @@ TIPO_FUNCTION getFunction();
 TIPO_LOOP getLace(string nome);
 TIPO_LOOP getLaceBreak();
 TIPO_FUNCTION getFunctionChamada(string nome);
+void verificarAtributoRelacional(atributos tipo_1);
 %}
 
 %token TK_NUM TK_REAL TK_CHAR TK_TRUE TK_FALSE TK_STRING TK_VOID TK_FUNCTION
@@ -158,6 +159,15 @@ FUNSSAO     : DECLAFUNC '(' PARAMETERS ')' BLOCO
 
 DECLAFUNC  : TK_FUNCTION TIPOS TK_ID
 		   {
+			   int size = tabelaFunction.size() - 1;
+			   for(int i = size; i >= 0; i--)
+			   {
+				   if($3.label == tabelaFunction[i].nomeFunction)
+				   {
+						error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Nome de função já existe.\n";
+				   }
+			   }
+
 			   traducaoFunction += "    _" + $3.label + ":\n";
 			   $$.label = $3.label;
 			   $$.tipo = $2.tipo;
@@ -196,6 +206,7 @@ COMANDOS	: COMANDO COMANDOS
 			}
 			| TK_IF '(' E ')' E ';' COMANDOS
 			{
+				verificarAtributoRelacional($3);
 				$$.label = gentempcode();
 
 				if(controleFunction > 0){
@@ -213,6 +224,7 @@ COMANDOS	: COMANDO COMANDOS
 			}
 			| TK_IF '(' E ')' E ';' TK_ELSE E ';' COMANDOS
 			{
+				verificarAtributoRelacional($3);
 				$$.label = gentempcode();
 				if(controleFunction > 0){
 					traducaoFunction = traducaoFunction + "\t" + "int" + " " + $$.label +";\n";
@@ -229,6 +241,7 @@ COMANDOS	: COMANDO COMANDOS
 			}
 			| TK_IF '(' E ')' E ';' TK_ELSE BLOCO COMANDOS
 			{
+				verificarAtributoRelacional($3);
 				$$.label = gentempcode();
 				if(controleFunction > 0){
 					traducaoFunction = traducaoFunction + "\t" + "int" + " " + $$.label +";\n";
@@ -245,6 +258,7 @@ COMANDOS	: COMANDO COMANDOS
 			}
 			| TK_IF '(' E ')' BLOCO COMANDOS
 			{
+				verificarAtributoRelacional($3);
 				$$.label = gentempcode();
 
 				if(!mainStatus){
@@ -262,6 +276,7 @@ COMANDOS	: COMANDO COMANDOS
 			}
 			| TK_IF '(' E ')' BLOCO TK_ELSE E ';' COMANDOS
 			{
+				verificarAtributoRelacional($3);
 				$$.label = gentempcode();
 				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
 				string cond = genCondcode();
@@ -274,6 +289,7 @@ COMANDOS	: COMANDO COMANDOS
 			}
 			| TK_IF '(' E ')' BLOCO TK_ELSE BLOCO COMANDOS
 			{
+				verificarAtributoRelacional($3);
 				$$.label = gentempcode();
 				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
 				string cond = genCondcode();
@@ -283,8 +299,9 @@ COMANDOS	: COMANDO COMANDOS
 				"if(" + $$.label + ") goto ELSE;\n" + $5.traducao +
 				"\tgoto " + cond + "\n" + "\tELSE:\n" + $7.traducao + "\t"+cond+"\n" + $8.traducao;
 			}
-			| TK_WHILE '(' P ')' BLOCO COMANDOS
+			| TK_WHILE '(' E ')' BLOCO COMANDOS
 			{
+				verificarAtributoRelacional($3);
 				$$.label = gentempcode();
 				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
 				TIPO_LOOP loop = getLace($1.label);
@@ -295,6 +312,7 @@ COMANDOS	: COMANDO COMANDOS
 			}
 			| TK_DO BLOCO TK_WHILE '(' E ')' ';' COMANDOS
 			{
+				verificarAtributoRelacional($5);
 				$$.label = gentempcode();
 				atribuicaoVariavel = atribuicaoVariavel + "\t" + "int" + " " + $$.label +";\n";
 				TIPO_LOOP loop = getLace($1.label);
@@ -357,7 +375,7 @@ COMANDO 	: E ';'
 			{
 				if(controleLoop == 0)
 				{
-					error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Break não existente em um loop, ignorado.\n";
+					error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Break não existente em um loop.\n";
 				} else {
 					TIPO_LOOP loop = getLaceBreak();
 					$$.traducao = "\tgoto " + loop.fimLaco + "\n";
@@ -366,7 +384,7 @@ COMANDO 	: E ';'
 			| TK_CONTINUE ';'
 			{
 				if(controleLoop == 0){
-					error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Continue não existente em um loop, ignorado.\n";
+					error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Continue não existente em um loop.\n";
 				} else {
 					TIPO_LOOP loop = getLaceBreak();
 					$$.traducao = "\tgoto " + loop.inicioLaco + "\n";
@@ -404,8 +422,8 @@ DECLARACAO  : TIPOS TK_ID
 							tabelaFunction[indiceTopo].parameters.push_back(simb);
 
 						} else {
-							for (int i = indiceTopo; i >= 0; i--)
-							{ 
+							for (int i = tabelaFunction[indiceTopo].parameters.size(); i >= 0; i--)
+							{
 								if(tabelaFunction[indiceTopo].parameters[i].nomeVariavel == $2.label)
 								{
 									error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Nome do parâmetro '" + $2.label + "' ja utilizado na função.\n";
@@ -416,8 +434,9 @@ DECLARACAO  : TIPOS TK_ID
 						traducaoFunction = traducaoFunction + "\t" + simb.tipoVariavel + " " + simb.labelVariavel +";\n";
 						
 					} else {
-						int indiceTopoParameters = tabelaFunction[indiceTopo].parameters.size();
+
 						if(controleFunction > 0 && getContexto() > 0){
+							int indiceTopoParameters = tabelaFunction[indiceTopo].parameters.size();
 							for (int i = indiceTopoParameters; i >= 0; i--)
 							{ 
 								if(tabelaFunction[indiceTopo].parameters[i].nomeVariavel == $2.label)
@@ -444,7 +463,7 @@ DECLARACAO  : TIPOS TK_ID
 						{
 							tabelaFunction[indiceTopo].parameters.push_back(simb);
 						} else {
-							for (int i = indiceTopo; i >= 0; i--)
+							for (int i = tabelaFunction[indiceTopo].parameters.size(); i >= 0; i--)
 							{ 
 								if(tabelaFunction[indiceTopo].parameters[i].nomeVariavel == $2.label)
 								{
@@ -455,8 +474,8 @@ DECLARACAO  : TIPOS TK_ID
 						}
 						traducaoFunction = traducaoFunction + "\t" + "char" + " *" + simb.labelVariavel + ";\n";
 					} else {
-						int indiceTopoParameters = tabelaFunction[indiceTopo].parameters.size();
 						if(controleFunction > 0 && getContexto() > 0){
+							int indiceTopoParameters = tabelaFunction[indiceTopo].parameters.size();
 							for (int i = indiceTopoParameters; i >= 0; i--)
 							{ 
 								if(tabelaFunction[indiceTopo].parameters[i].nomeVariavel == $2.label)
@@ -508,6 +527,12 @@ E 			: M '+' E
 				$$.label = gentempcode();
 				string tipoAux;
 				string labelAux;
+				
+				cout << $1.tipo;
+
+				if($1.tipo == "string" && $3.tipo == "string"){
+					error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Concatenação de string em breve.\n";
+				}
 
 				if($1.tipo == $3.tipo){
 					$$.tipo = $1.tipo;
@@ -586,12 +611,18 @@ E 			: M '+' E
 			| TK_ID TK_MAIS_MAIS
 			{
 				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
+				if(variavel_1.tipoVariavel == "char" || variavel_1.tipoVariavel == "string" || variavel_1.tipoVariavel == "boolean" || variavel_1.tipoVariavel == "float"){
+					error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Tipo inválido para operação unária.\n";
+				}
 				$$.traducao = $1.traducao + $2.traducao + "\t" + 
 				variavel_1.labelVariavel + " = " + variavel_1.labelVariavel + " + 1" + ";\n";
 			}
 			| TK_ID TK_MENOS_MENOS
 			{
 				TIPO_SIMBOLO variavel_1 = getSimbolo($1.label);
+				if(variavel_1.tipoVariavel == "char" || variavel_1.tipoVariavel == "string" || variavel_1.tipoVariavel == "boolean" || variavel_1.tipoVariavel == "float"){
+					error += "\033[1;31merror\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Tipo inválido para operação unária.\n";
+				}
 				$$.traducao = $1.traducao + $2.traducao + "\t" + 
 				variavel_1.labelVariavel + " = " + variavel_1.labelVariavel + " - 1" + ";\n";
 			}
@@ -773,6 +804,7 @@ RELACIONAL  : E '>' E
 			}
 			| E TK_E E
 			{
+				verificarOperacaoRelacional($1, $3);
 				$$.label = gentempcode();
 				addTemp($$.label, "int");
 				$$.traducao = $1.traducao + $3.traducao + "\t" + 
@@ -1032,7 +1064,6 @@ P 			: '(' E ')'
 			| TK_SCAN '(' TK_ID ')'
 			{
 				TIPO_SIMBOLO variavel = getSimbolo($3.label);
-
 				$$.traducao = $3.traducao + "\t" "STD::CIN >> " + variavel.labelVariavel + ";\n";
 			}
 			;
@@ -1226,7 +1257,14 @@ int getSize(string str){
 }
 
 void verificarOperacaoRelacional(atributos tipo_1, atributos tipo_2){
-	if(tipo_1.tipo == "char" || tipo_2.tipo == "char" && tipo_1.tipo == "string" || tipo_2.tipo == "string")
+	if((tipo_1.tipo == "char" || tipo_2.tipo == "char") || (tipo_1.tipo == "string" || tipo_2.tipo == "string"))
+	{
+		error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Operação relacional inválida.\n";
+	}
+}
+
+void verificarAtributoRelacional(atributos tipo_1){
+	if(tipo_1.tipo == "char" || tipo_1.tipo == "string" || tipo_1.tipo == "void")
 	{
 		error += "\033[1;31mError\033[0m - \033[1;36mLinha " + contLinha +  ":\033[0m\033[1;39m Operação relacional inválida.\n";
 	}
