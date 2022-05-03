@@ -9,5 +9,5 @@ commit:
 		git init
 		git add .
 		git commit -m "final commit"
-		git branch -M main
-		git push -u origin main
+		git branch -M Entrega_Final
+		git push -u origin Entrega_Final
